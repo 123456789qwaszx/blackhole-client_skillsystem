@@ -24,7 +24,8 @@ namespace BlackHole.Unity
         private Texture2D _enemyTexture;
         private GUISkin _consoleSkin;
         private int _styledFontSize;
-        private Vector2 _consoleScroll;
+        private Vector2 _skillScroll;
+        private Vector2 _enemyScroll;
 
         private void Awake()
         {
@@ -110,25 +111,52 @@ namespace BlackHole.Unity
             ApplyConsoleStyle();
             GUISkin previous = GUI.skin;
             GUI.skin = _consoleSkin;
-            float width = Mathf.Min(400, Mathf.Max(260, Screen.width * 0.45f));
-            float height = Mathf.Min(520, Screen.height * 0.7f);
-            GUILayout.BeginArea(new Rect(12, 12, width, height), GUI.skin.box);
-            _consoleScroll = GUILayout.BeginScrollView(_consoleScroll);
-            DrawConsoleContent();
-            GUILayout.EndScrollView();
-            GUILayout.EndArea();
+            float width = Mathf.Min(400, (Screen.width - 36) * 0.42f);
+            DrawSkillConsole(new Rect(12, 12, width, Mathf.Min(280, Screen.height * 0.65f)));
+            DrawEnemyConsole(new Rect(Screen.width - width - 12, 12, width,
+                Mathf.Min(520, Screen.height * 0.7f)));
             GUI.skin = previous;
         }
 
-        private void DrawConsoleContent()
+        private void DrawSkillConsole(Rect area)
         {
+            GUILayout.BeginArea(area, GUI.skin.box);
+            _skillScroll = GUILayout.BeginScrollView(_skillScroll);
             GUILayout.Label("Skill Sandbox / aim: mouse");
-            if (_catalog == null) { GUILayout.Label(_message); return; }
-            DrawSkillControls();
-            foreach (EnemyTarget enemy in _battle.Enemies)
-                GUILayout.Label($"Enemy ({enemy.Position.X}, {enemy.Position.Y}) HP {enemy.Health:0.0}");
-            if (GUILayout.Button("Restart test")) { _battle.End(); StartBattle(); }
+            if (_catalog != null)
+            {
+                DrawSkillControls();
+                if (_battle != null && GUILayout.Button("Restart test"))
+                {
+                    _battle.End();
+                    StartBattle();
+                }
+            }
             GUILayout.Label(_message);
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+        }
+
+        private void DrawEnemyConsole(Rect area)
+        {
+            GUILayout.BeginArea(area, GUI.skin.box);
+            _enemyScroll = GUILayout.BeginScrollView(_enemyScroll);
+            GUILayout.Label("Enemy Stats");
+            if (_battle != null)
+            {
+                IReadOnlyList<EnemyTarget> enemies = _battle.Enemies;
+                for (int i = 0; i < enemies.Count; i++)
+                {
+                    EnemyTarget enemy = enemies[i];
+                    GUILayout.Label($"Enemy {i + 1} ({enemy.Position.X}, {enemy.Position.Y})");
+                    GUILayout.Label($"HP {enemy.Health:0.0} / {enemy.MaxHealth:0.0}");
+                    GUILayout.Label($"State: {(enemy.IsAlive ? "Alive" : "Dead")}");
+                    GUILayout.Label($"Last hit by: {(enemy.LastAttacker?.ToString() ?? "-")}");
+                    GUILayout.Space(8);
+                }
+            }
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
         }
 
         private void ApplyConsoleStyle()

@@ -6,6 +6,7 @@ namespace BlackHole.Skills.TestPack
     public sealed class EnemyTarget : ISkillTarget
     {
         public Point2 Position { get; }
+        public float MaxHealth { get; }
         public float Health { get; private set; }
         public bool IsAlive => Health > 0;
         public int? LastAttacker { get; private set; }
@@ -15,6 +16,7 @@ namespace BlackHole.Skills.TestPack
             if (float.IsNaN(health) || float.IsInfinity(health) || health <= 0)
                 throw new ArgumentOutOfRangeException(nameof(health));
             Position = position;
+            MaxHealth = health;
             Health = health;
         }
 
