@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63fb63c43ff948c7be06563174077286, type: 3}
+  m_Name: EnemyCatalog
+  m_EditorClassIdentifier: BlackHole.SkillSandbox::BlackHole.Unity.EnemyCatalogAsset
+  _enemies:
+  - Id: normal
+    Health: 14
+    DeathEffect:
+      Type: 0
+      Damage: 0
+      Radius: 0
+      MaxTargets: 0
+      Duration: 0
+      IntervalMultiplier: 0
+      CriticalMultiplier: 0
+  - Id: electric
+    Health: 6
+    DeathEffect:
+      Type: 1
+      Damage: 5
+      Radius: 2.5
+      MaxTargets: 3
+      Duration: 0
+      IntervalMultiplier: 0
+      CriticalMultiplier: 0
+  - Id: explosive
+    Health: 6
+    DeathEffect:
+      Type: 2
+      Damage: 7
+      Radius: 2.5
+      MaxTargets: 0
+      Duration: 0
+      IntervalMultiplier: 0
+      CriticalMultiplier: 0
+  - Id: haste
+    Health: 6
+    DeathEffect:
+      Type: 3
+      Damage: 0
+      Radius: 0
+      MaxTargets: 0
+      Duration: 5
+      IntervalMultiplier: 0.5
+      CriticalMultiplier: 0
+  - Id: critical
+    Health: 6
+    DeathEffect:
+      Type: 4
+      Damage: 0
+      Radius: 0
+      MaxTargets: 0
+      Duration: 5
+      IntervalMultiplier: 0
+      CriticalMultiplier: 2

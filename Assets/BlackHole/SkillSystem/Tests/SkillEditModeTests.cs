@@ -25,5 +25,18 @@ namespace BlackHole.Skills.Tests
             Assert.AreEqual(2f, result.Catalog.StatsFor(SkillType.Breaker).Damage);
             Assert.AreEqual(3f, result.Catalog.StatsFor(SkillType.PiercingLaser).Damage);
         }
+
+        [Test]
+        public void SampleEnemyCatalogAssetLoads()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<EnemyCatalogAsset>(
+                "Assets/BlackHole/SkillSystem/Config/EnemyCatalog.asset");
+            Assert.NotNull(asset);
+            EnemyCatalog catalog = asset.Load();
+            Assert.AreEqual(DeathEffectType.ChainLightning, catalog.Get("electric").DeathEffect.Type);
+            Assert.AreEqual(DeathEffectType.Explosion, catalog.Get("explosive").DeathEffect.Type);
+            Assert.AreEqual(DeathEffectType.AttackHaste, catalog.Get("haste").DeathEffect.Type);
+            Assert.AreEqual(DeathEffectType.GuaranteedCritical, catalog.Get("critical").DeathEffect.Type);
+        }
     }
 }

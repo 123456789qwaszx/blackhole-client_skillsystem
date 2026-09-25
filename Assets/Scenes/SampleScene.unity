@@ -405,8 +405,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: BlackHole.SkillSandbox::BlackHole.Unity.GameHost
   _skillCatalog: {fileID: 11400000, guid: 3a263d56b497425885d899c150fbf0af, type: 2}
+  _enemyCatalog: {fileID: 11400000, guid: 983c91e258cc4a928474726fc9597ce6, type: 2}
   _arenaRadius: 9
-  _enemyHealth: 40
   _consoleFontSize: 26
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

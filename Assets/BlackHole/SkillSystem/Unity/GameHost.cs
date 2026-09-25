@@ -10,13 +10,14 @@ namespace BlackHole.Unity
     public sealed class GameHost : MonoBehaviour
     {
         [SerializeField] private SkillCatalogAsset _skillCatalog;
+        [SerializeField] private EnemyCatalogAsset _enemyCatalog;
         [SerializeField, Min(0.1f)] private float _arenaRadius = 9;
-        [SerializeField, Min(0.1f)] private float _enemyHealth = 40;
         [SerializeField, Range(20, 40)] private int _consoleFontSize = 26;
 
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
         private readonly Dictionary<SkillType, bool> _enabledBySkill = new Dictionary<SkillType, bool>();
         private SkillCatalog _catalog;
+        private EnemyCatalog _enemies;
         private SkillBattle _battle;
         private Camera _camera;
         private string _message;
@@ -40,6 +41,9 @@ namespace BlackHole.Unity
                 return;
             }
             _catalog = result.Catalog;
+            if (_enemyCatalog == null) { Fail("GameHost에 Enemy Catalog SO가 연결되지 않았다."); return; }
+            try { _enemies = _enemyCatalog.Load(); }
+            catch (System.ArgumentException error) { Fail(error.Message); return; }
             foreach (SkillType skill in _catalog.AvailableSkills) _enabledBySkill.Add(skill, true);
             _camera = Camera.main;
             if (_camera != null) { _camera.orthographic = true; _camera.orthographicSize = 11; }
@@ -65,15 +69,17 @@ namespace BlackHole.Unity
             _battle = new SkillBattle(_catalog, 1, _arenaRadius, new FixedRandom(0));
             foreach (var choice in _enabledBySkill)
                 if (!choice.Value) _battle.SetSkillEnabled(choice.Key, false);
-            AddEnemy(new Point2(0, 0));
-            AddEnemy(new Point2(2, 0));
-            AddEnemy(new Point2(0, 2));
+            AddEnemy(new Point2(0, 0), "normal");
+            AddEnemy(new Point2(-2, 0), "electric");
+            AddEnemy(new Point2(-2, -2), "explosive");
+            AddEnemy(new Point2(0, 2), "haste");
+            AddEnemy(new Point2(2, 2), "critical");
         }
 
-        private void AddEnemy(Point2 position)
+        private void AddEnemy(Point2 position, string id)
         {
-            EnemyTarget enemy = _battle.AddEnemy(position, _enemyHealth);
-            var gameObject = new GameObject($"Enemy ({position.X}, {position.Y})");
+            EnemyTarget enemy = _battle.AddEnemy(position, _enemies.Get(id));
+            var gameObject = new GameObject($"Enemy {id} ({position.X}, {position.Y})");
             gameObject.transform.SetParent(transform);
             var view = gameObject.AddComponent<EnemyView>();
             view.Bind(enemy, _enemySprite);
@@ -132,6 +138,13 @@ namespace BlackHole.Unity
             GUILayout.Label("Skill Sandbox / aim: mouse");
             if (_catalog != null)
                 DrawSkillControls();
+            if (_battle != null)
+            {
+                if (_battle.Buffs.HasteRemaining(1) > 0)
+                    GUILayout.Label($"Attack haste: {_battle.Buffs.HasteRemaining(1):0.0} s");
+                if (_battle.Buffs.CriticalRemaining(1) > 0)
+                    GUILayout.Label($"Guaranteed critical: {_battle.Buffs.CriticalRemaining(1):0.0} s");
+            }
             GUILayout.Label(_message);
             GUILayout.EndScrollView();
             GUILayout.EndArea();
@@ -151,7 +164,7 @@ namespace BlackHole.Unity
                 for (int i = 0; i < enemies.Count; i++)
                 {
                     EnemyTarget enemy = enemies[i];
-                    GUILayout.Label($"Enemy {i + 1}: HP {enemy.Health:0.0} / {enemy.MaxHealth:0.0}");
+                    GUILayout.Label($"{enemy.Id}: HP {enemy.Health:0.0} / {enemy.MaxHealth:0.0}");
                     GUILayout.Space(8);
                 }
             }
@@ -247,6 +260,19 @@ namespace BlackHole.Unity
                     Gizmos.color = Color.yellow;
                     foreach (LaserShot shot in laser.PendingShots) DrawLine(shot);
                     if (laser.LastFired.HasValue) { Gizmos.color = Color.cyan; DrawLine(laser.LastFired.Value); }
+                }
+            foreach (EffectActivation effect in _battle.LastEffectActivations)
+                if (effect.Type == DeathEffectType.Explosion)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireSphere(new Vector3(effect.Position.X, effect.Position.Y, 0), effect.Radius);
+                }
+            foreach (EffectHit hit in _battle.LastEffectHits)
+                if (hit.Type == DeathEffectType.ChainLightning)
+                {
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawLine(new Vector3(hit.From.X, hit.From.Y, 0),
+                        new Vector3(hit.To.X, hit.To.Y, 0));
                 }
         }
 

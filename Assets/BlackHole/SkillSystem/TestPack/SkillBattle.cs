@@ -9,6 +9,8 @@ namespace BlackHole.Skills.TestPack
         private readonly List<EnemyTarget> _enemies = new List<EnemyTarget>();
         private readonly List<SkillRuntime> _skills = new List<SkillRuntime>();
         private readonly List<bool> _enabled = new List<bool>();
+        private readonly DeathEffects _deathEffects = new DeathEffects();
+        private readonly PlayerBuffs _buffs = new PlayerBuffs();
         private readonly SkillCatalog _catalog;
         private readonly ISkillRandom _random;
         private readonly float _arenaRadius;
@@ -17,6 +19,9 @@ namespace BlackHole.Skills.TestPack
 
         public IReadOnlyList<EnemyTarget> Enemies => _enemies.AsReadOnly();
         public IReadOnlyList<SkillRuntime> Skills => _skills.AsReadOnly();
+        public IReadOnlyList<EffectHit> LastEffectHits => _deathEffects.LastHits;
+        public IReadOnlyList<EffectActivation> LastEffectActivations => _deathEffects.LastActivations;
+        public PlayerBuffs Buffs => _buffs;
         public Point2? Aim { get; set; }
 
         public SkillBattle(SkillCatalog catalog, int playerId, float arenaRadius, ISkillRandom random)
@@ -61,8 +66,14 @@ namespace BlackHole.Skills.TestPack
 
         public EnemyTarget AddEnemy(Point2 position, float health)
         {
+            return AddEnemy(position, new EnemyDefinition
+                { Id = "target", Health = health, DeathEffect = new DeathEffectDefinition() });
+        }
+
+        public EnemyTarget AddEnemy(Point2 position, EnemyDefinition definition)
+        {
             if (_ended) throw new InvalidOperationException("종료된 전투다.");
-            var enemy = new EnemyTarget(position, health);
+            var enemy = new EnemyTarget(position, definition);
             _enemies.Add(enemy);
             return enemy;
         }
@@ -72,7 +83,11 @@ namespace BlackHole.Skills.TestPack
             if (_ended) throw new InvalidOperationException("종료된 전투다.");
             IReadOnlyList<ISkillTarget> targets = _enemies;
             for (int i = 0; i < _skills.Count; i++)
-                if (_enabled[i]) _skills[i].Advance(delta, Aim, targets, _random, _arenaRadius);
+                if (_enabled[i]) _skills[i].Advance(delta, Aim, targets, _random, _arenaRadius,
+                    _buffs.AttackRate(_playerId), _buffs.DamageMultiplier(_playerId));
+            _buffs.Advance(delta);
+            IReadOnlyList<IDeathEffectTarget> effectTargets = _enemies;
+            _deathEffects.Resolve(effectTargets, _buffs);
         }
 
         public void End()
