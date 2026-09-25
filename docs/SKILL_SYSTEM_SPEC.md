@@ -1,18 +1,18 @@
 # Skill-only sandbox
 
-`gameplay.json`에는 `Version: 1`과 `Skills` 목록만 있다.
-각 항목은 `Type`과 해당 스킬의 `Stats`를 담는다. 샘플 파일은
-[`Resources/gameplay.json`](../Assets/BlackHole/SkillSystem/Resources/gameplay.json)에 있다.
+스킬 수치는 [`Config/SkillCatalog.asset`](../Assets/BlackHole/SkillSystem/Config/SkillCatalog.asset)의
+`Skills` 목록에 저장한다. 각 항목은 `Type`과 해당 스킬의 `Stats`를 담는다.
+샘플 씬의 `GameHost`가 이 SO 에셋을 참조한다.
 
 | Type | 필요한 수치 | 의미 |
 | --- | --- | --- |
 | Breaker | Damage, Interval, Radius | 피해, 반복 간격(초), 조준 반경 |
-| PiercingLaser | Damage, Interval, Width, TelegraphDuration | 피해, 예고 간격(초), 폭, 예고 길이(초) |
+| PiercingLaser | Damage, Interval, Width, TelegraphDuration | 피해, 반복 간격(초), 폭, 예고 길이(초) |
 
-`SkillCatalog.Load`는 종류별 수치를 검사해 `SkillType → SkillStats`로 보관한다.
+SO의 `Load()`는 목록을 순수 C# `SkillCatalog.Load()`에 넘긴다.
+카탈로그는 종류별 수치를 검사하고 복사해 `SkillType → SkillStats`로 보관한다.
 사용하는 수치는 유한한 양수여야 하고, 사용하지 않는 수치는 0이어야 한다.
-중복 종류나 알 수 없는 종류는 진단과 함께 거부한다. 파일 IO/역직렬화는
-Unity 호스트가 맡으며 코어는 순수 C#이다.
+중복 종류나 알 수 없는 종류는 진단과 함께 거부한다. 코어는 순수 C#이다.
 
 테스트 전투는 정의된 스킬을 모두 독립 실행 상태로 만들고 체크박스에서
 스킬별 발동을 켜고 끈다. 끄면 공격 타이머와 진행 중인 레이저 예고를 버리고,

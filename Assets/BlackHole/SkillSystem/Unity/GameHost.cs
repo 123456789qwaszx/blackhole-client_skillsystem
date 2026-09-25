@@ -9,7 +9,7 @@ namespace BlackHole.Unity
     // 샘플 씬의 진입점. 실제 게임 규칙이 아니라 스킬 발동과 적 피해를 눈으로 확인하는 샌드박스다.
     public sealed class GameHost : MonoBehaviour
     {
-        [SerializeField] private TextAsset _gameplay;
+        [SerializeField] private SkillCatalogAsset _skillCatalog;
         [SerializeField, Min(0.1f)] private float _arenaRadius = 9;
         [SerializeField, Min(0.1f)] private float _enemyHealth = 40;
         [SerializeField, Range(20, 40)] private int _consoleFontSize = 26;
@@ -29,14 +29,12 @@ namespace BlackHole.Unity
 
         private void Awake()
         {
-            TextAsset json = _gameplay != null ? _gameplay : Resources.Load<TextAsset>("gameplay");
-            if (json == null) { Fail("Resources/gameplay.json이 없다."); return; }
-            GameplayData raw = JsonUtility.FromJson<GameplayData>(json.text);
-            SkillLoadResult result = SkillCatalog.Load(raw);
+            if (_skillCatalog == null) { Fail("GameHost에 Skill Catalog SO가 연결되지 않았다."); return; }
+            SkillLoadResult result = _skillCatalog.Load();
             if (!result.Succeeded)
             {
                 foreach (SkillDiagnostic error in result.Diagnostics) Debug.LogError(error.ToString());
-                Fail("gameplay.json 수치를 확인하세요.");
+                Fail("Skill Catalog SO의 수치를 확인하세요.");
                 return;
             }
             _catalog = result.Catalog;

@@ -17,15 +17,11 @@ namespace BlackHole.Skills.Tests
             yield return ("Battle.PlayersRunIndependently", PlayersRunIndependently);
         }
 
-        private static GameplayData Data() => new GameplayData
+        private static List<SkillData> Data() => new List<SkillData>
         {
-            Version = 1,
-            Skills = new List<SkillData>
-            {
-                new SkillData { Type = "Breaker", Stats = new SkillStats { Damage = 2, Interval = 1, Radius = 1 } },
-                new SkillData { Type = "PiercingLaser", Stats = new SkillStats
-                    { Damage = 5, Interval = 3, Width = 1, TelegraphDuration = 0.4f } }
-            }
+            new SkillData { Type = SkillType.Breaker, Stats = new SkillStats { Damage = 2, Interval = 1, Radius = 1 } },
+            new SkillData { Type = SkillType.PiercingLaser, Stats = new SkillStats
+                { Damage = 5, Interval = 3, Width = 1, TelegraphDuration = 0.4f } }
         };
 
         private static SkillCatalog Catalog()
@@ -46,14 +42,14 @@ namespace BlackHole.Skills.Tests
 
         private static void RejectsInvalidSkills()
         {
-            GameplayData data = Data();
-            data.Skills[0].Stats.Damage = float.NaN;
-            data.Skills[1].Stats.Radius = 2;
-            data.Skills.Add(new SkillData { Type = "Other", Stats = new SkillStats() });
+            List<SkillData> data = Data();
+            data[0].Stats.Damage = float.NaN;
+            data[1].Stats.Radius = 2;
+            data.Add(new SkillData { Type = (SkillType)999, Stats = new SkillStats() });
             Check(!SkillCatalog.Load(data).Succeeded, "잘못된 종류·수치를 거부한다.");
-            Check(!SkillCatalog.Load(new GameplayData { Version = 2 }).Succeeded, "버전을 검사한다.");
+            Check(!SkillCatalog.Load(null).Succeeded, "누락된 스킬 목록을 거부한다.");
             data = Data();
-            data.Skills.Add(data.Skills[0]);
+            data.Add(data[0]);
             Check(!SkillCatalog.Load(data).Succeeded, "중복 Skill을 거부한다.");
         }
 

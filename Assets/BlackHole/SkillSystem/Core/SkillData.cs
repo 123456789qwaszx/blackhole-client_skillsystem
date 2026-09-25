@@ -1,22 +1,14 @@
 using System;
-using System.Collections.Generic;
 
 namespace BlackHole.Skills
 {
     public enum SkillType { Breaker, PiercingLaser }
 
-    // 스킬 실행 수치만 담는다. Unity JsonUtility도 읽을 수 있는 필드형 DTO다.
-    [Serializable]
-    public sealed class GameplayData
-    {
-        public int Version;
-        public List<SkillData> Skills = new List<SkillData>();
-    }
-
+    // Unity SO와 순수 C# 테스트가 공유하는 수치 데이터.
     [Serializable]
     public sealed class SkillData
     {
-        public string Type;
+        public SkillType Type;
         public SkillStats Stats;
     }
 

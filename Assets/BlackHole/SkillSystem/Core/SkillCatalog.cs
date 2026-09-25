@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlackHole.Skills
 {
-    // rawData를 스킬 종류별 수치로 검증하고 색인한다. 어떤 스킬을 실행할지는 샌드박스가 정한다.
+    // SO의 스킬 목록을 검증해 종류별 수치로 색인한다. Unity API는 알지 못한다.
     public sealed class SkillCatalog
     {
         private readonly Dictionary<SkillType, SkillStats> _stats;
@@ -24,25 +24,22 @@ namespace BlackHole.Skills
             return stats.Copy();
         }
 
-        public static SkillLoadResult Load(GameplayData data)
+        public static SkillLoadResult Load(IReadOnlyList<SkillData> skills)
         {
             var errors = new List<SkillDiagnostic>();
             var stats = new Dictionary<SkillType, SkillStats>();
-            if (data == null)
-                return new SkillLoadResult(null, new[] { new SkillDiagnostic("Gameplay", "데이터가 없다.") });
-            if (data.Version != 1)
-                errors.Add(new SkillDiagnostic("Version", "지원하는 버전은 1이다."));
-            if (data.Skills == null || data.Skills.Count == 0)
+            if (skills == null || skills.Count == 0)
                 errors.Add(new SkillDiagnostic("Skills", "스킬이 하나 이상 필요하다."));
-            else for (int i = 0; i < data.Skills.Count; i++)
+            else for (int i = 0; i < skills.Count; i++)
             {
-                SkillData item = data.Skills[i];
+                SkillData item = skills[i];
                 string path = $"Skills[{i}]";
-                if (item == null || !TryType(item.Type, out SkillType type))
+                if (item == null || !Enum.IsDefined(typeof(SkillType), item.Type))
                 {
                     errors.Add(new SkillDiagnostic(path + ".Type", "지원하지 않는 스킬 종류다."));
                     continue;
                 }
+                SkillType type = item.Type;
                 if (stats.ContainsKey(type))
                 {
                     errors.Add(new SkillDiagnostic(path + ".Type", "스킬 종류가 중복됐다."));
@@ -59,9 +56,6 @@ namespace BlackHole.Skills
                 ? new SkillLoadResult(new SkillCatalog(stats), errors)
                 : new SkillLoadResult(null, errors);
         }
-
-        private static bool TryType(string name, out SkillType type) =>
-            Enum.TryParse(name, out type) && type.ToString() == name;
 
         private static bool Positive(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value > 0;
         private static bool Valid(SkillType type, SkillStats value)
