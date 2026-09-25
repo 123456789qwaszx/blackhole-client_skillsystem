@@ -2,6 +2,7 @@
 
 스킬 수치는 [`Config/SkillCatalog.asset`](../Assets/BlackHole/SkillSystem/Config/SkillCatalog.asset)의
 `Skills` 목록에 저장한다. 각 항목은 `Type`과 해당 스킬의 `Stats`를 담는다.
+같은 SO의 `Player Combat`에는 공통 치명타 확률·배율과 공격 간격 배율을 둔다.
 샘플 씬의 `GameHost`가 이 SO 에셋을 참조한다.
 
 | Type | 필요한 수치 | 의미 |
@@ -33,7 +34,7 @@ SO의 `Load()`는 목록을 순수 C# `SkillCatalog.Load()`에 넘긴다.
 | ChainLightning | Damage, Radius, MaxTargets | 사망 위치에서 가까운 일반 적으로 최대 MaxTargets번 이동. 대상 재방문 금지, 각 이동 거리 ≤ Radius |
 | Explosion | Damage, Radius | 사망 위치를 중심으로 Radius 안의 살아 있는 일반 적 전부 1회 피해 |
 | AttackHaste | Duration, IntervalMultiplier | 처치한 플레이어의 공격 타이머 진행 속도를 일시적으로 높임. 0.5면 주기가 절반 |
-| GuaranteedCritical | Duration, CriticalMultiplier | 처치한 플레이어의 스킬 피해를 일시적으로 배율 적용. 샘플 2배 |
+| GuaranteedCritical | Duration, CriticalMultiplier | 처치한 플레이어의 직접 스킬 공격을 확정 치명타로 만듦. 샘플 배율 2배 |
 
 효과 피해는 종류에 관계없이 **다른 사망 효과 보유 적을 대상에서 제외**한다.
 따라서 효과 피해가 다른 효과를 재귀적으로 발동시키지 않는다. 직접 공격으로 죽은

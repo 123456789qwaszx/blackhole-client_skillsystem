@@ -21,6 +21,13 @@ namespace BlackHole.Skills.Tests
             yield return ("Death.ChainStopsAtHopLimitAndDoesNotRepeat", ChainStopsAtHopLimitAndDoesNotRepeat);
             yield return ("Buff.HasteAndCriticalApplyToKillerThenExpire", HasteAndCriticalApplyToKillerThenExpire);
             yield return ("Buff.PlayersDoNotShareKillBuffs", PlayersDoNotShareKillBuffs);
+            yield return ("Crit.OneRollForAllTargets", OneRollForAllTargets);
+            yield return ("Crit.LaserChecksBuffOnFire", LaserChecksBuffOnFire);
+            yield return ("Haste.PreservesCooldownProgress", HastePreservesCooldownProgress);
+            yield return ("Battle.FrameBudgetCarriesUnprocessedTime", FrameBudgetCarriesUnprocessedTime);
+            yield return ("Battle.AttackIntervalHasMinimum", AttackIntervalHasMinimum);
+            yield return ("Buff.CriticalExpiresAtAttackBoundary", CriticalExpiresAtAttackBoundary);
+            yield return ("Crit.DirectionStreamIsIndependent", DirectionStreamIsIndependent);
         }
 
         private static List<SkillData> Data() => new List<SkillData>
@@ -239,8 +246,8 @@ namespace BlackHole.Skills.Tests
             haste.Hit(1, 1);
             critical.Hit(1, 1);
             battle.Advance(0);
-            Equal(2f, battle.Buffs.AttackRate(1));
-            Equal(2f, battle.Buffs.DamageMultiplier(1));
+            Equal(0.5f, battle.Buffs.IntervalMultiplier(1));
+            Check(battle.Buffs.IsGuaranteedCritical(1), "치명타 버프가 부여되어야 한다.");
             battle.SetSkillEnabled(SkillType.Breaker, true);
             battle.Aim = new Point2(0, 0);
             battle.Advance(0);
@@ -248,11 +255,11 @@ namespace BlackHole.Skills.Tests
             battle.Advance(0.5f);
             Equal(12f, normal.Health);
             battle.Advance(0.5f);
-            Equal(8f, normal.Health);
-            Equal(1f, battle.Buffs.AttackRate(1));
-            Equal(1f, battle.Buffs.DamageMultiplier(1));
+            Equal(10f, normal.Health);
+            Equal(1f, battle.Buffs.IntervalMultiplier(1));
+            Check(!battle.Buffs.IsGuaranteedCritical(1), "치명타 버프가 만료되어야 한다.");
             battle.Advance(1f);
-            Equal(6f, normal.Health);
+            Equal(8f, normal.Health);
             battle.End();
         }
 
@@ -261,10 +268,164 @@ namespace BlackHole.Skills.Tests
             var buffs = new PlayerBuffs();
             buffs.Grant(2, new DeathEffectDefinition { Type = DeathEffectType.GuaranteedCritical,
                 Duration = 3, CriticalMultiplier = 2 });
-            Equal(1f, buffs.DamageMultiplier(1));
-            Equal(2f, buffs.DamageMultiplier(2));
+            Check(!buffs.IsGuaranteedCritical(1), "다른 플레이어는 버프를 받지 않는다.");
+            Check(buffs.IsGuaranteedCritical(2), "처치자만 버프를 받는다.");
             buffs.Advance(3);
-            Equal(1f, buffs.DamageMultiplier(2));
+            Check(!buffs.IsGuaranteedCritical(2), "버프가 만료된다.");
+        }
+
+        private static void OneRollForAllTargets()
+        {
+            var roll = new CountingRandom(0.25f);
+            var combat = new PlayerCombatStats { CritChance = 0.5f, CritMultiplier = 2 };
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0), combat, roll);
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget a = battle.AddEnemy(new Point2(0, 0), 10);
+            EnemyTarget b = battle.AddEnemy(new Point2(0.5f, 0), 10);
+            battle.Advance(0);
+            Equal(6f, a.Health);
+            Equal(6f, b.Health);
+            Equal(1, roll.Count);
+            Equal(2, battle.LastSkillHits.Count);
+            Check(battle.LastSkillHits[0].IsCritical && battle.LastSkillHits[1].IsCritical,
+                "같은 공격의 적중은 치명타 결과를 공유한다.");
+            battle.Aim = new Point2(8, 8);
+            battle.Advance(1);
+            Equal(1, roll.Count);
+            battle.End();
+        }
+
+        private static void LaserChecksBuffOnFire()
+        {
+            var direction = new CountingRandom(0);
+            var criticalRoll = new CountingRandom(0.9f);
+            var battle = new SkillBattle(Catalog(), 1, 10, direction,
+                new PlayerCombatStats(), criticalRoll);
+            battle.SetSkillEnabled(SkillType.Breaker, false);
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget target = battle.AddEnemy(new Point2(2, 0), 20);
+            EnemyTarget source = battle.AddEnemy(new Point2(0, 3), Enemy("critical", 1,
+                new DeathEffectDefinition { Type = DeathEffectType.GuaranteedCritical,
+                    Duration = 1, CriticalMultiplier = 2 }));
+            battle.Advance(0);
+            Equal(1, direction.Count);
+            source.Hit(1, 1);
+            battle.Advance(0);
+            battle.Advance(0.4f);
+            Equal(14f, target.Health);
+            Equal(0, criticalRoll.Count);
+            Check(battle.LastSkillHits[0].IsCritical, "발사 시 버프가 적용된다.");
+            battle.End();
+
+            var expired = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            expired.SetSkillEnabled(SkillType.Breaker, false);
+            expired.Aim = new Point2(0, 0);
+            EnemyTarget plain = expired.AddEnemy(new Point2(2, 0), 20);
+            EnemyTarget shortBuff = expired.AddEnemy(new Point2(0, 3), Enemy("critical", 1,
+                new DeathEffectDefinition { Type = DeathEffectType.GuaranteedCritical,
+                    Duration = 0.2f, CriticalMultiplier = 2 }));
+            expired.Advance(0);
+            shortBuff.Hit(1, 1);
+            expired.Advance(0);
+            expired.Advance(0.4f);
+            Equal(17f, plain.Health);
+            Check(!expired.LastSkillHits[0].IsCritical, "예고 중 만료한 버프는 발사에 적용되지 않는다.");
+            expired.End();
+        }
+
+        private static void HastePreservesCooldownProgress()
+        {
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget target = battle.AddEnemy(new Point2(0, 0), 20);
+            battle.Advance(0);
+            battle.Advance(0.5f);
+            Equal(18f, target.Health);
+            battle.Buffs.Grant(1, new DeathEffectDefinition { Type = DeathEffectType.AttackHaste,
+                Duration = 0.2f, IntervalMultiplier = 0.5f });
+            battle.Advance(0.2f);
+            Equal(18f, target.Health);
+            battle.Advance(0.05f);
+            Equal(18f, target.Health);
+            battle.Advance(0.05f);
+            Equal(16f, target.Health);
+            battle.End();
+        }
+
+        private static void FrameBudgetCarriesUnprocessedTime()
+        {
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            battle.Buffs.Grant(1, new DeathEffectDefinition { Type = DeathEffectType.AttackHaste,
+                Duration = 1, IntervalMultiplier = 0.5f });
+            battle.AdvanceFrame(1);
+            Check(Math.Abs(battle.Buffs.HasteRemaining(1) - 0.8f) < 0.0001f,
+                "첫 렌더 프레임은 최대 네 Step만 처리한다.");
+            battle.AdvanceFrame(0);
+            Check(Math.Abs(battle.Buffs.HasteRemaining(1) - 0.6f) < 0.0001f,
+                "남은 시간은 다음 프레임에 이어서 처리한다.");
+            battle.End();
+        }
+
+        private static void AttackIntervalHasMinimum()
+        {
+            var combat = new PlayerCombatStats { IntervalMultiplier = 0.01f };
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0), combat);
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget target = battle.AddEnemy(new Point2(0, 0), 100);
+            battle.Advance(0.2f);
+            Equal(94f, target.Health);
+            Equal(3, ((BreakerRuntime)battle.Skills[0]).TickCount);
+            battle.End();
+            Check(!new PlayerCombatStats { CritChance = 1.1f }.IsValid(), "확률은 100%를 넘을 수 없다.");
+        }
+
+        private static void CriticalExpiresAtAttackBoundary()
+        {
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget target = battle.AddEnemy(new Point2(0, 0), 20);
+            battle.Buffs.Grant(1, new DeathEffectDefinition { Type = DeathEffectType.GuaranteedCritical,
+                Duration = 0.1f, CriticalMultiplier = 2 });
+            battle.Advance(0);
+            Equal(16f, target.Health);
+            battle.Buffs.Grant(1, new DeathEffectDefinition { Type = DeathEffectType.AttackHaste,
+                Duration = 0.1f, IntervalMultiplier = 0.1f });
+            battle.Advance(0.1f);
+            Equal(14f, target.Health);
+            Check(!battle.LastSkillHits[0].IsCritical, "만료와 같은 시각의 공격은 치명타가 아니다.");
+            battle.End();
+        }
+
+        private static void DirectionStreamIsIndependent()
+        {
+            SkillCatalog catalog = Catalog();
+            var plain = new SkillBattle(catalog, 1, 10, 123u);
+            var critical = new SkillBattle(catalog, 1, 10, 123u,
+                new PlayerCombatStats { CritChance = 0.5f });
+            plain.SetSkillEnabled(SkillType.Breaker, false);
+            critical.SetSkillEnabled(SkillType.Breaker, false);
+            plain.Aim = critical.Aim = new Point2(0, 0);
+            plain.AddEnemy(new Point2(0, 0), 100);
+            critical.AddEnemy(new Point2(0, 0), 100);
+            plain.Advance(3);
+            critical.Advance(3);
+            LaserShot a = ((LaserRuntime)plain.Skills[0]).PendingShots[0];
+            LaserShot b = ((LaserRuntime)critical.Skills[0]).PendingShots[0];
+            Equal(a.Start.X, b.Start.X);
+            Equal(a.Start.Y, b.Start.Y);
+            plain.End(); critical.End();
+        }
+
+        private sealed class CountingRandom : ISkillRandom
+        {
+            private readonly float _value;
+            public int Count { get; private set; }
+            public CountingRandom(float value) => _value = value;
+            public float NextFloat() { Count++; return _value; }
         }
 
         private static void CheckThrows(Action action, string message)

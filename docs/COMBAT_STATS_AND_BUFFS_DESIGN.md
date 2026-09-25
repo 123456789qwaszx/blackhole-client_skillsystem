@@ -1,8 +1,8 @@
 # 스킬 공통 전투 수치와 천체 처치 버프 — 기획 명세
 
-작성일: 2026-09-25  
+작성일: 2026-09-25 · 구현 반영: 2026-09-26  
 적용 대상: `skill-only-sandbox`의 Breaker, PiercingLaser, 천체 사망 효과  
-상태: **다음 구현을 위한 기획 결정**. 현재 코드와 다른 부분은 9절에 명시한다.
+상태: **전투 수치 명세와 구현 기준**. 현재 브랜치의 구현 범위·한계는 9절에 명시한다.
 
 ## 1. 플레이 경험과 범위
 
@@ -70,7 +70,7 @@ Laser의 `TelegraphDuration`은 예고가 보이는 시간이다. Haste가 주�
 - 노드 등 영구 강화로 얻은 확률과 유효한 한시 확률 보너스를 더한 뒤 0~1로 제한한다.
 - `GuaranteedCritical`이 활성화되면 최종 확률을 **1로 설정**한다. 확률 보너스를
   더하거나 피해 배율을 별도로 더하지 않는다.
-- 직접 공격의 최종 피해는 `기본 스킬 피해 × (치명타면 CritMultiplier, 아니면 1)`이다.
+- 직접 공격의 최종 피해는 `기본 스킬 피해 × (치명타면 max(플레이어 CritMultiplier, 현재 버프의 CriticalMultiplier), 아니면 1)`이다.
   다른 피해 보정이 도입되면 그 연산 순서를 별도 명세로 확정한다. 현재는 방어력·취약
   배율이 없다.
 
@@ -157,19 +157,21 @@ Laser의 `TelegraphDuration`은 예고가 보이는 시간이다. Haste가 주�
 짧은 버프가 긴 Step 전체에 적용되거나, 지속 시간이 남았는데 아무 영향도 주지
 못하는 일을 막는다. 예고 완료와 공격 Tick도 같은 전투 시간축에 놓는다.
 
-## 9. 현행 코드와 명세의 차이
+## 9. 현행 구현과 남은 범위
 
-| 대상 | 지금 `skill-only-sandbox`에 있는 것 | 후속 구현에서 바꿀 것 |
+| 대상 | `skill-only-sandbox` 구현 | 남은 범위 |
 | --- | --- | --- |
-| 스킬 수치 | `SkillStats`에 고유 형상과 피해·간격이 함께 있음 | 공통 `CritChance`·`CritMultiplier`·`IntervalMultiplier`를 플레이어 전투 수치로 도입. 스킬 고유 형상 유지 |
-| Haste | `PlayerBuffs.AttackRate`가 타이머에 배율을 전달함 | 진행률 유지와 버프 만료 경계를 위 규칙에 맞춰 검증 |
-| 긴 프레임 | `Time.deltaTime` 전체를 한 번에 스킬에 전달 | Step 최대 0.05초·프레임당 최대 네 Step, 초과 시간 이월과 효과 만료 경계 처리 |
-| 확정 치명타 | 현재 `DamageMultiplier`로 직접 피해를 늘림. **확률 판정과 `IsCritical`이 없음** | 공격 1회 치명타 판정으로 교체하고 배율은 결과가 치명타일 때 1회만 적용 |
-| 피해 기록 | `ISkillTarget.Hit(damage, playerId)`에는 치명타 여부가 없음 | 직접 적중 기록에 `IsCritical`과 최종 피해를 추가. 적 HP·사망 확정의 단일 경로 유지 |
-| 난수 | Laser 방향에 `ISkillRandom`을 사용 | 플레이어별로 레이저 시작점과 치명타 판정의 난수 스트림을 분리하고 같은 Battle seed에서 재현 |
-| 데이터 | `SkillCatalog.asset`·`EnemyCatalog.asset`에 기본 수치·처치 버프가 있음 | 플레이어 기본 치명타 수치의 저작 위치 추가. 시연용 SO의 기존 값은 보존 |
+| 스킬·플레이어 수치 | 스킬 형상은 `SkillStats`; 공통 수치는 `SkillCatalog.asset`의 `PlayerCombatStats` | 노드 수치 주소 연결은 별도 작업 |
+| Haste | 현재 공격 진행률을 유지하며 속도만 바꾸고, 만료·공격 시각에서 Step을 분할 | Unity Play 수치 검증 |
+| 긴 프레임 | `AdvanceFrame`이 최대 0.05초 Step 네 번 실행하고 나머지를 이월 | 실제 기기에서 체감·처리량 확인 |
+| 치명타 | `SkillDamage`가 유효 타깃이 있는 공격당 1회 판정하며 버프 중 확정 | Unity Play·시각 표현 확인 |
+| 피해 기록 | `SkillHit`에 대상·최종 피해·소유자·`IsCritical`을 남김 | 완성 게임의 연출 소비 경계 연결 |
+| 난수 | Battle seed와 PlayerId로 방향·치명타 난수를 별도 생성 | 실제 전투 시드 전달·기록 연계 |
+| 데이터 | 두 SO에서 Skill·Enemy·플레이어 기본 수치를 로드 | 장기 콘텐츠·저작 툴은 범위 밖 |
 
-이 문서는 **명세 확정 작업**이며 9절의 코드 변경을 완료했다는 뜻이 아니다.
+`SkillBattle.Advance(delta)`는 계약 시나리오용으로 전달 시간을 끝까지 분할 처리한다.
+Unity 호스트는 프레임 예산과 이월 규칙이 있는 `AdvanceFrame(delta)`를 사용한다.
+코어 계약과 Unity EditMode·Play의 최신 실행 결과는 별도 확인이 필요하다.
 
 ## 10. 판정 예시와 완료 기준
 

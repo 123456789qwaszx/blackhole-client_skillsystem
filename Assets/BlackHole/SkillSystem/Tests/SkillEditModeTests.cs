@@ -24,6 +24,8 @@ namespace BlackHole.Skills.Tests
             Assert.AreEqual(2, result.Catalog.AvailableSkills.Count);
             Assert.AreEqual(2f, result.Catalog.StatsFor(SkillType.Breaker).Damage);
             Assert.AreEqual(3f, result.Catalog.StatsFor(SkillType.PiercingLaser).Damage);
+            Assert.AreEqual(0f, asset.LoadPlayerCombat().CritChance);
+            Assert.AreEqual(2f, asset.LoadPlayerCombat().CritMultiplier);
         }
 
         [Test]

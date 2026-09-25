@@ -41,11 +41,22 @@ namespace BlackHole.Skills
             }
         }
 
-        public float AttackRate(int playerId) => _players.TryGetValue(playerId, out BuffState state) &&
-            state.HasteTime > 0 ? 1 / state.IntervalMultiplier : 1;
+        public float IntervalMultiplier(int playerId) => _players.TryGetValue(playerId, out BuffState state) &&
+            state.HasteTime > 0 ? state.IntervalMultiplier : 1;
 
-        public float DamageMultiplier(int playerId) => _players.TryGetValue(playerId, out BuffState state) &&
+        public bool IsGuaranteedCritical(int playerId) => _players.TryGetValue(playerId, out BuffState state) &&
+            state.CriticalTime > 0;
+
+        public float CriticalMultiplier(int playerId) => _players.TryGetValue(playerId, out BuffState state) &&
             state.CriticalTime > 0 ? state.CriticalMultiplier : 1;
+
+        public float TimeUntilExpiry(int playerId)
+        {
+            if (!_players.TryGetValue(playerId, out BuffState state)) return float.PositiveInfinity;
+            float haste = state.HasteTime > 0 ? state.HasteTime : float.PositiveInfinity;
+            float critical = state.CriticalTime > 0 ? state.CriticalTime : float.PositiveInfinity;
+            return Math.Min(haste, critical);
+        }
 
         public float HasteRemaining(int playerId) => _players.TryGetValue(playerId, out BuffState state)
             ? state.HasteTime : 0;

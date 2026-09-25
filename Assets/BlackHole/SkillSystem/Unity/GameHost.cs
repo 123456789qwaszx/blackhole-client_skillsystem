@@ -17,6 +17,7 @@ namespace BlackHole.Unity
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
         private readonly Dictionary<SkillType, bool> _enabledBySkill = new Dictionary<SkillType, bool>();
         private SkillCatalog _catalog;
+        private PlayerCombatStats _combatStats;
         private EnemyCatalog _enemies;
         private SkillBattle _battle;
         private Camera _camera;
@@ -41,6 +42,8 @@ namespace BlackHole.Unity
                 return;
             }
             _catalog = result.Catalog;
+            try { _combatStats = _skillCatalog.LoadPlayerCombat(); }
+            catch (System.ArgumentException error) { Fail(error.Message); return; }
             if (_enemyCatalog == null) { Fail("GameHost에 Enemy Catalog SO가 연결되지 않았다."); return; }
             try { _enemies = _enemyCatalog.Load(); }
             catch (System.ArgumentException error) { Fail(error.Message); return; }
@@ -59,14 +62,14 @@ namespace BlackHole.Unity
                 Vector3 position = _camera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
                 _battle.Aim = new Point2(position.x, position.y);
             }
-            _battle.Advance(Time.deltaTime);
+            _battle.AdvanceFrame(Time.deltaTime);
             foreach (EnemyView view in _enemyViews) view.Refresh();
         }
 
         private void StartBattle()
         {
             ClearEnemies();
-            _battle = new SkillBattle(_catalog, 1, _arenaRadius, new FixedRandom(0));
+            _battle = new SkillBattle(_catalog, 1, _arenaRadius, 0x4d5b0201u, _combatStats);
             foreach (var choice in _enabledBySkill)
                 if (!choice.Value) _battle.SetSkillEnabled(choice.Key, false);
             AddEnemy(new Point2(0, 0), "normal");

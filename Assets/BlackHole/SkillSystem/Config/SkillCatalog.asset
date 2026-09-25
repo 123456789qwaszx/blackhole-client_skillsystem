@@ -27,3 +27,7 @@ MonoBehaviour:
       Radius: 0
       Width: 0.5
       TelegraphDuration: 0.4
+  _playerCombat:
+    CritChance: 0
+    CritMultiplier: 2
+    IntervalMultiplier: 1

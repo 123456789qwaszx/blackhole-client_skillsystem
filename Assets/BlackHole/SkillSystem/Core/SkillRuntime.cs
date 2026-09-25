@@ -40,7 +40,10 @@ namespace BlackHole.Skills
         }
 
         public abstract void Advance(float delta, Point2? aim, IReadOnlyList<ISkillTarget> targets,
-            ISkillRandom random, float arenaRadius, float attackRate = 1, float damageMultiplier = 1);
+            ISkillRandom random, float arenaRadius, SkillDamage damage, float attackRate);
+
+        // 다음 공격 또는 예고 완료까지 남은 전투 시간. Battle이 같은 시각의 이벤트를 묶는다.
+        public abstract float TimeUntilNextEvent(float attackRate);
 
         public static SkillRuntime Create(SkillType type, SkillStats stats, int playerId)
         {
@@ -59,10 +62,9 @@ namespace BlackHole.Skills
                 throw new ArgumentOutOfRangeException(nameof(delta));
         }
 
-        protected static void CheckModifiers(float attackRate, float damageMultiplier)
+        protected static void CheckAttackRate(float attackRate)
         {
-            if (float.IsNaN(attackRate) || float.IsInfinity(attackRate) || attackRate <= 0 ||
-                float.IsNaN(damageMultiplier) || float.IsInfinity(damageMultiplier) || damageMultiplier <= 0)
+            if (float.IsNaN(attackRate) || float.IsInfinity(attackRate) || attackRate <= 0)
                 throw new ArgumentOutOfRangeException(nameof(attackRate));
         }
     }
@@ -70,29 +72,31 @@ namespace BlackHole.Skills
     // 조준점 주변의 살아 있는 적을 정해진 주기로 한 번씩 공격한다.
     public sealed class BreakerRuntime : SkillRuntime
     {
+        private readonly List<ISkillTarget> _targets = new List<ISkillTarget>();
         private float _untilNext;
         public int TickCount { get; private set; }
         public int LastHitCount { get; private set; }
 
         internal BreakerRuntime(SkillStats stats, int playerId) : base(SkillType.Breaker, stats, playerId) { }
 
+        public override float TimeUntilNextEvent(float attackRate) => Math.Max(0, _untilNext / attackRate);
+
         public override void Advance(float delta, Point2? aim, IReadOnlyList<ISkillTarget> targets,
-            ISkillRandom random, float arenaRadius, float attackRate = 1, float damageMultiplier = 1)
+            ISkillRandom random, float arenaRadius, SkillDamage damage, float attackRate)
         {
             CheckDelta(delta);
-            CheckModifiers(attackRate, damageMultiplier);
+            CheckAttackRate(attackRate);
+            if (damage == null) throw new ArgumentNullException(nameof(damage));
             _untilNext -= delta * attackRate;
-            while (_untilNext <= 0)
+            while (_untilNext <= 0.000001f)
             {
-                LastHitCount = 0;
                 TickCount++;
+                _targets.Clear();
                 if (aim.HasValue)
                     foreach (ISkillTarget target in targets)
                         if (target.IsAlive && target.Position.DistanceSquared(aim.Value) <= Stats.Radius * Stats.Radius)
-                        {
-                            target.Hit(Stats.Damage * damageMultiplier, PlayerId);
-                            LastHitCount++;
-                        }
+                            _targets.Add(target);
+                LastHitCount = damage.Apply(Type, PlayerId, Stats.Damage, _targets);
                 _untilNext += Stats.Interval;
             }
         }
@@ -114,6 +118,7 @@ namespace BlackHole.Skills
     public sealed class LaserRuntime : SkillRuntime
     {
         private readonly List<LaserShot> _pending = new List<LaserShot>();
+        private readonly List<ISkillTarget> _targets = new List<ISkillTarget>();
         private float _untilNext;
         public IReadOnlyList<LaserShot> PendingShots => _pending.AsReadOnly();
         public int FireCount { get; private set; }
@@ -122,28 +127,36 @@ namespace BlackHole.Skills
 
         internal LaserRuntime(SkillStats stats, int playerId) : base(SkillType.PiercingLaser, stats, playerId) { }
 
+        public override float TimeUntilNextEvent(float attackRate)
+        {
+            float next = Math.Max(0, _untilNext / attackRate);
+            foreach (LaserShot shot in _pending) next = Math.Min(next, Math.Max(0, shot.Remaining));
+            return next;
+        }
+
         public override void Advance(float delta, Point2? aim, IReadOnlyList<ISkillTarget> targets,
-            ISkillRandom random, float arenaRadius, float attackRate = 1, float damageMultiplier = 1)
+            ISkillRandom random, float arenaRadius, SkillDamage damage, float attackRate)
         {
             CheckDelta(delta);
-            CheckModifiers(attackRate, damageMultiplier);
+            CheckAttackRate(attackRate);
+            if (damage == null) throw new ArgumentNullException(nameof(damage));
             if (random == null) throw new ArgumentNullException(nameof(random));
             if (float.IsNaN(arenaRadius) || float.IsInfinity(arenaRadius) || arenaRadius <= 0)
                 throw new ArgumentOutOfRangeException(nameof(arenaRadius));
 
             for (int i = 0; i < _pending.Count; i++) _pending[i] = _pending[i].Elapse(delta);
             _untilNext -= delta * attackRate;
-            while (_untilNext <= 0)
+            while (_untilNext <= 0.000001f)
             {
                 Telegraph(aim, random, arenaRadius, Stats.TelegraphDuration + _untilNext / attackRate);
                 _untilNext += Stats.Interval;
             }
             for (int i = 0; i < _pending.Count;)
             {
-                if (_pending[i].Remaining > 0) { i++; continue; }
+                if (_pending[i].Remaining > 0.000001f) { i++; continue; }
                 LaserShot shot = _pending[i];
                 _pending.RemoveAt(i);
-                Fire(shot, targets, damageMultiplier);
+                Fire(shot, targets, damage);
             }
         }
 
@@ -159,18 +172,16 @@ namespace BlackHole.Skills
             _pending.Add(new LaserShot(start, new Point2(start.X + travel * dx, start.Y + travel * dy), remaining));
         }
 
-        private void Fire(LaserShot shot, IReadOnlyList<ISkillTarget> targets, float damageMultiplier)
+        private void Fire(LaserShot shot, IReadOnlyList<ISkillTarget> targets, SkillDamage damage)
         {
             FireCount++;
             LastFired = shot;
-            LastHitCount = 0;
             float widthSquared = Stats.Width * Stats.Width / 4;
+            _targets.Clear();
             foreach (ISkillTarget target in targets)
                 if (target.IsAlive && DistanceSquaredToSegment(target.Position, shot) <= widthSquared)
-                {
-                    target.Hit(Stats.Damage * damageMultiplier, PlayerId);
-                    LastHitCount++;
-                }
+                    _targets.Add(target);
+            LastHitCount = damage.Apply(Type, PlayerId, Stats.Damage, _targets);
         }
 
         private static float DistanceSquaredToSegment(Point2 point, LaserShot shot)
