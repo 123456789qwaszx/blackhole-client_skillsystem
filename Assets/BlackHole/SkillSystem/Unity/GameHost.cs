@@ -23,9 +23,12 @@ namespace BlackHole.Unity
         private Sprite _enemySprite;
         private Texture2D _enemyTexture;
         private GUISkin _consoleSkin;
+        private Texture2D _statusCircle;
         private int _styledFontSize;
         private Vector2 _skillScroll;
+        private Vector2 _detailsScroll;
         private Vector2 _enemyScroll;
+        private SkillType? _selectedSkill;
 
         private void Awake()
         {
@@ -101,6 +104,7 @@ namespace BlackHole.Unity
         {
             if (_enemySprite != null) Destroy(_enemySprite);
             if (_enemyTexture != null) Destroy(_enemyTexture);
+            if (_statusCircle != null) Destroy(_statusCircle);
             if (_consoleSkin != null) Destroy(_consoleSkin);
         }
 
@@ -110,7 +114,11 @@ namespace BlackHole.Unity
             GUISkin previous = GUI.skin;
             GUI.skin = _consoleSkin;
             float width = Mathf.Min(400, (Screen.width - 36) * 0.42f);
-            DrawSkillConsole(new Rect(12, 12, width, Mathf.Min(280, Screen.height * 0.65f)));
+            float skillHeight = Mathf.Min(250, Screen.height * 0.48f);
+            DrawSkillConsole(new Rect(12, 12, width, skillHeight));
+            if (_selectedSkill.HasValue && _catalog != null)
+                DrawSkillDetails(new Rect(12, 20 + skillHeight, width,
+                    Mathf.Max(0, Screen.height - skillHeight - 32)));
             DrawEnemyConsole(new Rect(Screen.width - width - 12, 12, width,
                 Mathf.Min(300, Screen.height * 0.6f)));
             GUI.skin = previous;
@@ -169,14 +177,63 @@ namespace BlackHole.Unity
 
         private void DrawSkillControls()
         {
-            GUILayout.Label("Skills (checked = active)");
+            if (_statusCircle == null) _statusCircle = CreateStatusCircle();
+            GUILayout.Label("Skills (circle = active, name = stats)");
             foreach (SkillType skill in _catalog.AvailableSkills)
             {
-                bool selected = GUILayout.Toggle(_enabledBySkill[skill], skill.ToString());
-                if (selected == _enabledBySkill[skill]) continue;
-                _enabledBySkill[skill] = selected;
-                _battle?.SetSkillEnabled(skill, selected);
+                GUILayout.BeginHorizontal();
+                Rect button = GUILayoutUtility.GetRect(44, 44, GUILayout.Width(44), GUILayout.Height(44));
+                bool enabled = _enabledBySkill[skill];
+                if (GUI.Button(button, GUIContent.none, GUIStyle.none))
+                {
+                    enabled = !enabled;
+                    _enabledBySkill[skill] = enabled;
+                    _battle?.SetSkillEnabled(skill, enabled);
+                }
+                Color previous = GUI.color;
+                GUI.color = enabled ? new Color(0.25f, 0.8f, 0.35f) : new Color(0.45f, 0.45f, 0.45f);
+                GUI.DrawTexture(new Rect(button.x + 6, button.y + 6, 32, 32), _statusCircle);
+                GUI.color = previous;
+                if (GUILayout.Button(skill.ToString(), GUILayout.ExpandWidth(true)))
+                    _selectedSkill = skill;
+                GUILayout.EndHorizontal();
             }
+        }
+
+        private void DrawSkillDetails(Rect area)
+        {
+            GUILayout.BeginArea(area, GUI.skin.box);
+            _detailsScroll = GUILayout.BeginScrollView(_detailsScroll);
+            SkillType skill = _selectedSkill.Value;
+            SkillStats stats = _catalog.StatsFor(skill);
+            GUILayout.Label(skill.ToString() + " / Stats");
+            GUILayout.Label($"Damage: {stats.Damage:0.##}");
+            GUILayout.Label($"Interval: {stats.Interval:0.##} s");
+            if (skill == SkillType.Breaker)
+                GUILayout.Label($"Radius: {stats.Radius:0.##}");
+            else if (skill == SkillType.PiercingLaser)
+            {
+                GUILayout.Label($"Width: {stats.Width:0.##}");
+                GUILayout.Label($"Telegraph: {stats.TelegraphDuration:0.##} s");
+            }
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+        }
+
+        private static Texture2D CreateStatusCircle()
+        {
+            const int size = 32;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            texture.filterMode = FilterMode.Bilinear;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - size / 2f;
+                    float dy = y + 0.5f - size / 2f;
+                    texture.SetPixel(x, y, dx * dx + dy * dy <= 196 ? Color.white : Color.clear);
+                }
+            texture.Apply();
+            return texture;
         }
 
         private void OnDrawGizmos()

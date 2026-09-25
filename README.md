@@ -10,7 +10,8 @@
 Unity의 `Assets/Scenes/SampleScene.unity`를 Play하고 마우스로 적을 조준합니다.
 수치를 바꾸려면 `Config/SkillCatalog.asset`을 선택해 각 스킬의 `Stats`를 편집하고 Play하세요.
 새 에셋은 `Assets > Create > BlackHole > Skill Catalog`에서 만들고 `GameHost`의 `Skill Catalog`에 연결할 수 있습니다.
-좌측 스킬 콘솔에서 스킬마다 체크/해제해 공격을 켜고 끌 수 있습니다.
+좌측 스킬 콘솔에서 이름 왼쪽의 동그란 버튼을 눌러 공격을 켜고 끌 수 있습니다(초록색=켜짐, 회색=꺼짐).
+스킬 이름을 누르면 좌측 콘솔 아래의 별도 창에 해당 스킬의 수치가 표시됩니다.
 우측 Enemy HP 콘솔에는 적마다 현재/최대 HP만 표시됩니다.
 우측 적 콘솔의 `Restart test`는 적의 HP와 스킬 타이머를 다시 시작하며 체크 상태는 유지합니다.
 Play 중 `GameHost/Enemy`를 선택하면 Inspector에서도 HP를 볼 수 있습니다.
