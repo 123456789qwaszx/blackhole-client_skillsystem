@@ -90,6 +90,7 @@ namespace BlackHole.Skills.Tests
         private static void BreakerCanStopAndRestart()
         {
             var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
             battle.Aim = new Point2(0, 0);
             EnemyTarget enemy = battle.AddEnemy(new Point2(0, 0), 10);
             Check(battle.IsSkillEnabled(SkillType.Breaker), "기본으로 켜져야 한다.");
