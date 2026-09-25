@@ -403,7 +403,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8a576f4c54a40039b3e6860fe948215, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BlackHole.Unity::BlackHole.Unity.GameHost
+  m_EditorClassIdentifier: BlackHole.SkillSandbox::BlackHole.Unity.GameHost
+  _gameplay: {fileID: 4900000, guid: aed594af57f74079815eda8cea33ccaf, type: 3}
+  _arenaRadius: 9
+  _enemyHealth: 40
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
