@@ -37,13 +37,15 @@ namespace BlackHole.Core.Tests
 
         private static void RejectInvalidStandaloneContent()
         {
-            SkillData invalid = new SkillData { Id = "broken", Kind = "Breaker", Radius = 1, Interval = -1, Damage = 2 };
             SkillLoadResult result = SkillContentLoader.Load(
                 new[] { TestContent.Laser("same", 1, 2, 1, 0.2f),
-                    TestContent.Laser("same", 1, 2, 1, 0.2f), invalid },
+                    TestContent.Laser("same", 1, 2, 1, 0.2f) },
                 new[] { "absent", "absent" });
             Expect.True(!result.Succeeded && result.Content == null, "오류가 있는 스킬 묶음은 실행할 수 없다.");
-            Expect.True(result.Diagnostics.Count >= 3, "수치, 중복 ID, 시작 Skill 참조를 검사한다.");
+            Expect.True(result.Diagnostics.Count >= 2, "중복 ID와 시작 Skill 참조를 검사한다.");
+            SkillData invalid = new SkillData { Id = "broken", Kind = "Breaker", Radius = 1, Interval = -1, Damage = 2 };
+            SkillLoadResult broken = SkillContentLoader.Load(new[] { invalid }, new[] { "broken" });
+            Expect.True(!broken.Succeeded && broken.Diagnostics.Count == 1, "잘못된 수치에 대한 파생 참조 오류는 보고하지 않는다.");
             Expect.True(!SkillContentLoader.Load(null, null).Succeeded, "필수 목록 누락을 거부한다.");
         }
 

@@ -32,8 +32,10 @@ namespace BlackHole.Core
             if (startingSkills == null)
                 diagnostics.Add(new ContentDiagnostic("StartingSkills", "시작 Skill 목록이 없다."));
 
-            // 같은 검증을 전체 GameContent 생성자도 사용한다.
-            ContentInvariants.CollectSkills(definitions, startingSkills ?? Array.Empty<string>(), diagnostics, out _);
+            // 정의 자체가 잘못되면 참조 검증은 건너뛴다. 잘못된 수치 때문에
+            // 생긴 가짜 '시작 Skill 없음' 진단을 보고하지 않는다.
+            if (diagnostics.Count == 0)
+                ContentInvariants.CollectSkills(definitions, startingSkills, diagnostics, out _);
             return diagnostics.Count == 0
                 ? new SkillLoadResult(new SkillContent(definitions, startingSkills), diagnostics)
                 : new SkillLoadResult(null, diagnostics);
