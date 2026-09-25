@@ -44,6 +44,32 @@
 
 ## 수치 주소와 목록
 
+### gameplay.json의 스킬 경계
+
+스킬 코어는 역직렬화된 `ContentData.Skills`와 `ContentData.StartingSkills`를
+`SkillContentLoader.Load(skills, startingSkills)`로 독립 검증한다. 결과가 성공하면
+`SkillContent`에서 ID로 정의를 조회하고 종류별 `Stats.Entries`, `BaseValues`를 읽는다.
+실패하면 `Content`는 null이고 `Diagnostics`에 `Skills[...]` 또는
+`StartingSkills[...]` 경로가 담긴다. 전체 게임 로더도 동일한 스킬 로더를 사용한다.
+
+도구가 내보내는 `gameplay.json`에서는 다음 필드가 이 경계에 해당한다
+(아래는 전체 게임 콘텐츠 파일이 아니라 스킬 부분 예시다).
+
+```json
+{
+  "Skills": [
+    { "Id": "breaker", "Kind": "Breaker", "Radius": 2, "Interval": 1, "Damage": 3 },
+    { "Id": "laser", "Kind": "PiercingLaser", "Interval": 5, "Damage": 10,
+      "Width": 0.5, "TelegraphDuration": 0.4, "BoundaryRadius": 12 }
+  ],
+  "StartingSkills": ["breaker"]
+}
+```
+
+이 단계에서 코어는 JSON 파일을 직접 읽지 않는다. 파일 읽기/역직렬화는
+Unity 호스트 또는 저작 도구가 담당하며, 실제 `gameplay.json`을 전투에 연결하는
+작업은 별도다. `UpgradeLayout`과 화면용 노드 데이터는 스킬 로더의 입력이 아니다.
+
 `StatAddress = SkillId + StatId`. 반사나 C# 프로퍼티 경로를 사용하지 않는다.
 
 | 종류 | 수치 ID | 의미 | 연산 |

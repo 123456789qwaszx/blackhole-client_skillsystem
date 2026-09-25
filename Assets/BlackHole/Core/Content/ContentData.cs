@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace BlackHole.Core
 {
-    // 저작 형식. 검증 전 값이며 실행에 쓰지 않는다 — ContentLoader만 읽는다.
-    // 지금은 BlackHole.Sample의 SampleContent가 코드로 채운다(D2). 저작 방식(SO 등)은 v2의 검증 대상이 아니다.
+    // gameplay.json의 필드에 대응하는 저작 DTO. 역직렬화는 호스트/도구가 담당하고,
+    // 검증 전 값은 실행에 쓰지 않는다. Skill 필드만 따로 검증할 때는 SkillContentLoader를 쓴다.
     [Serializable]
     public sealed class ContentData
     {
@@ -152,4 +152,3 @@ namespace BlackHole.Core
         public List<SupplyData> Supply = new List<SupplyData>();
     }
 }
-

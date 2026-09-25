@@ -7,6 +7,8 @@ namespace BlackHole.Core.Tests
     {
         public static IEnumerable<Contract> Cases()
         {
+            yield return new Contract("Skills.LoadIndependentlyOfGameContent", LoadIndependentlyOfGameContent);
+            yield return new Contract("Skills.RejectInvalidStandaloneContent", RejectInvalidStandaloneContent);
             yield return new Contract("Stats.AddAndRateAreOrderIndependent", AddAndRateAreOrderIndependent);
             yield return new Contract("Stats.RejectUnknownOperationAndNonFinite", RejectUnknownOperationAndNonFinite);
             yield return new Contract("Stats.IntegerAndOperationConstraints", IntegerAndOperationConstraints);
@@ -17,6 +19,32 @@ namespace BlackHole.Core.Tests
             yield return new Contract("Loadout.FourPlayersRemainIndependent", FourPlayersRemainIndependent);
             yield return new Contract("Layout.IsSeparateFromPurchase", LayoutIsSeparateFromPurchase);
             yield return new Contract("Stats.NewSkillNeedsNoUpgradeBranch", NewSkillNeedsNoUpgradeBranch);
+        }
+
+        private static void LoadIndependentlyOfGameContent()
+        {
+            SkillLoadResult result = SkillContentLoader.Load(
+                new[] { TestContent.Laser("laser", 2, 3, 0.5f, 0.2f),
+                    new SkillData { Id = TestContent.SkillId, Kind = "Breaker", Radius = 1, Interval = 1, Damage = 2 } },
+                new[] { TestContent.SkillId });
+            Expect.True(result.Succeeded, "다른 gameplay 필드 없이 스킬만 검증한다.");
+            Expect.Equal(0, result.Diagnostics.Count);
+            Expect.True(result.Content.TryGetSkill("laser", out PassiveSkillDefinition laser), "ID로 Skill을 찾는다.");
+            Expect.Near(3, laser.ComputeStats(Array.Empty<StatModifier>())["Damage"]);
+            Expect.Equal(TestContent.SkillId, result.Content.StartingSkills[0]);
+            Expect.True(!result.Content.TryGetSkill("missing", out _), "없는 ID는 찾지 못한다.");
+        }
+
+        private static void RejectInvalidStandaloneContent()
+        {
+            SkillData invalid = new SkillData { Id = "broken", Kind = "Breaker", Radius = 1, Interval = -1, Damage = 2 };
+            SkillLoadResult result = SkillContentLoader.Load(
+                new[] { TestContent.Laser("same", 1, 2, 1, 0.2f),
+                    TestContent.Laser("same", 1, 2, 1, 0.2f), invalid },
+                new[] { "absent", "absent" });
+            Expect.True(!result.Succeeded && result.Content == null, "오류가 있는 스킬 묶음은 실행할 수 없다.");
+            Expect.True(result.Diagnostics.Count >= 3, "수치, 중복 ID, 시작 Skill 참조를 검사한다.");
+            Expect.True(!SkillContentLoader.Load(null, null).Succeeded, "필수 목록 누락을 거부한다.");
         }
 
         private static void AddAndRateAreOrderIndependent()

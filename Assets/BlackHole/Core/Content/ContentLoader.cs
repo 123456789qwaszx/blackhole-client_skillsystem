@@ -10,7 +10,7 @@ namespace BlackHole.Core
     // 수치 규칙은 정의 생성자를, 콘텐츠 전체 규칙은 ContentInvariants를 그대로 호출해 경로를 붙인다.
     //
     // 두 단계로 읽는다.
-    // 1. 독립 정의: 판 설정, HQ, Enemy, 출현 위치, Skill.
+    // 1. 독립 정의: 판 설정, HQ, Enemy, 출현 위치, Skill(SkillContentLoader).
     // 2. 다른 정의를 참조하는 정의: 전투 시작 배치, HQ 성장 노드, 업그레이드 노드.
     //    1단계의 Enemy·Skill 색인으로 대상 ID를 정의로 해석한다.
     public static class ContentLoader
@@ -28,11 +28,14 @@ namespace BlackHole.Core
             HqDefinition hq = LoadHq(data.Hq, diagnostics);
             List<EnemyDefinition> enemies = LoadEnemies(data.Enemies, diagnostics);
             SpawnDefinition spawn = LoadSpawn(data.Spawn, diagnostics);
-            List<PassiveSkillDefinition> skills = LoadSkills(data.Skills, diagnostics);
-            IReadOnlyList<string> startingSkills = (IReadOnlyList<string>)data.StartingSkills ?? Array.Empty<string>();
+            SkillLoadResult skillResult = SkillContentLoader.Load(data.Skills, data.StartingSkills);
+            foreach (ContentDiagnostic diagnostic in skillResult.Diagnostics) diagnostics.Add(diagnostic);
 
             if (diagnostics.Count > 0)
                 return Fail(diagnostics);
+
+            IReadOnlyList<PassiveSkillDefinition> skills = skillResult.Content.Skills;
+            IReadOnlyList<string> startingSkills = skillResult.Content.StartingSkills;
 
             ContentInvariants.Collect(
                 enemies,
@@ -49,7 +52,7 @@ namespace BlackHole.Core
             if (diagnostics.Count > 0)
                 return Fail(diagnostics);
 
-            // 노드 사이의 규칙(ID 유일, 선행 노드의 실재, 순환 없음)은 노드가 모두 올바를 때 본다.
+            // 노드 사이의 규칙은 노드가 모두 올바를 때 본다.
             ContentInvariants.CollectUpgrades(upgrades, diagnostics, out _);
 
             if (diagnostics.Count > 0)
@@ -387,53 +390,6 @@ namespace BlackHole.Core
             return false;
         }
 
-        // ── Passive Skill ───────────────────────────────────────────────────
-
-        private static List<PassiveSkillDefinition> LoadSkills(List<SkillData> items, List<ContentDiagnostic> into)
-        {
-            var skills = new List<PassiveSkillDefinition>();
-            if (items == null) return skills;
-
-            for (int i = 0; i < items.Count; i++)
-            {
-                SkillData item = items[i];
-                string at = At("Skills", i, item?.Id);
-                if (item == null)
-                {
-                    into.Add(new ContentDiagnostic(at, "Skill 데이터가 null이다."));
-                    continue;
-                }
-
-                PassiveSkillDefinition skill = LoadSkill(item, at, into);
-                if (skill != null) skills.Add(skill);
-            }
-            return skills;
-        }
-
-        // 종류 이름을 하위 정의로 바꾼다. 가능한 값을 진단에 그대로 싣는다. 수치 규칙은 정의 생성자가 가진다.
-        private static PassiveSkillDefinition LoadSkill(SkillData item, string at, List<ContentDiagnostic> into)
-        {
-            switch (item.Kind)
-            {
-                case "Breaker":
-                {
-                    BreakerStats? stats = GuardValue(at, into, () => new BreakerStats(item.Radius, item.Interval, item.Damage));
-                    if (stats == null) return null;
-                    return Guard(at, into, () => new BreakerSkillDefinition(item.Id, stats.Value));
-                }
-                case "PiercingLaser":
-                {
-                    PiercingLaserStats? stats = GuardValue(at, into, () =>
-                        new PiercingLaserStats(item.Interval, item.Damage, item.Width, item.TelegraphDuration));
-                    if (stats == null) return null;
-                    return Guard(at, into, () => new PiercingLaserDefinition(item.Id, stats.Value, item.BoundaryRadius));
-                }
-                default:
-                    into.Add(new ContentDiagnostic(at + ".Kind", $"알 수 없는 Skill 종류 '{item.Kind}'. 가능한 값: Breaker, PiercingLaser."));
-                    return null;
-            }
-        }
-
         // ── 공통 ────────────────────────────────────────────────────────────
 
         // 정의 생성자의 규칙 위반을 그 자리의 진단으로 바꾼다.
@@ -470,4 +426,3 @@ namespace BlackHole.Core
             new ContentLoadResult(null, diagnostics);
     }
 }
-

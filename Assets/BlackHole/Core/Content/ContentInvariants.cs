@@ -18,6 +18,15 @@ namespace BlackHole.Core
             out Dictionary<string, PassiveSkillDefinition> skillsById)
         {
             enemiesById = Index(enemies, "Enemies", "Enemy", e => e.Id, into);
+            CollectSkills(skills, startingSkills, into, out skillsById);
+        }
+
+        internal static void CollectSkills(
+            IReadOnlyList<PassiveSkillDefinition> skills,
+            IReadOnlyList<string> startingSkills,
+            ICollection<ContentDiagnostic> into,
+            out Dictionary<string, PassiveSkillDefinition> skillsById)
+        {
             skillsById = Index(skills, "Skills", "Skill", s => s.Id, into);
             VerifyStartingSkills(startingSkills, skillsById, into);
         }
@@ -137,4 +146,3 @@ namespace BlackHole.Core
         }
     }
 }
-
