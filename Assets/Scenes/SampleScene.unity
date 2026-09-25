@@ -407,6 +407,7 @@ MonoBehaviour:
   _gameplay: {fileID: 4900000, guid: aed594af57f74079815eda8cea33ccaf, type: 3}
   _arenaRadius: 9
   _enemyHealth: 40
+  _consoleFontSize: 26
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -12,6 +12,7 @@ namespace BlackHole.Unity
         [SerializeField] private TextAsset _gameplay;
         [SerializeField, Min(0.1f)] private float _arenaRadius = 9;
         [SerializeField, Min(0.1f)] private float _enemyHealth = 40;
+        [SerializeField, Range(20, 40)] private int _consoleFontSize = 26;
 
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
         private readonly Dictionary<SkillType, bool> _enabledBySkill = new Dictionary<SkillType, bool>();
@@ -22,6 +23,9 @@ namespace BlackHole.Unity
         private string _message;
         private Sprite _enemySprite;
         private Texture2D _enemyTexture;
+        private GUISkin _consoleSkin;
+        private int _styledFontSize;
+        private Vector2 _consoleScroll;
 
         private void Awake()
         {
@@ -100,13 +104,28 @@ namespace BlackHole.Unity
         {
             if (_enemySprite != null) Destroy(_enemySprite);
             if (_enemyTexture != null) Destroy(_enemyTexture);
+            if (_consoleSkin != null) Destroy(_consoleSkin);
         }
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(12, 12, 290, 370), GUI.skin.box);
+            ApplyConsoleStyle();
+            GUISkin previous = GUI.skin;
+            GUI.skin = _consoleSkin;
+            float width = Mathf.Min(400, Mathf.Max(260, Screen.width * 0.45f));
+            float height = Mathf.Min(520, Screen.height * 0.7f);
+            GUILayout.BeginArea(new Rect(12, 12, width, height), GUI.skin.box);
+            _consoleScroll = GUILayout.BeginScrollView(_consoleScroll);
+            DrawConsoleContent();
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+            GUI.skin = previous;
+        }
+
+        private void DrawConsoleContent()
+        {
             GUILayout.Label("Skill Sandbox / aim: mouse");
-            if (_catalog == null) { GUILayout.Label(_message); GUILayout.EndArea(); return; }
+            if (_catalog == null) { GUILayout.Label(_message); return; }
             DrawSkillControls();
             if (_battle != null)
             {
@@ -122,7 +141,20 @@ namespace BlackHole.Unity
                 if (GUILayout.Button("Start battle")) StartBattle();
             }
             GUILayout.Label(_message);
-            GUILayout.EndArea();
+        }
+
+        private void ApplyConsoleStyle()
+        {
+            if (_consoleSkin == null) _consoleSkin = Instantiate(GUI.skin);
+            if (_styledFontSize == _consoleFontSize) return;
+            _styledFontSize = _consoleFontSize;
+            _consoleSkin.label.fontSize = _consoleFontSize;
+            _consoleSkin.label.wordWrap = true;
+            _consoleSkin.toggle.fontSize = _consoleFontSize;
+            _consoleSkin.toggle.fixedHeight = _consoleFontSize + 18;
+            _consoleSkin.button.fontSize = _consoleFontSize;
+            _consoleSkin.button.fixedHeight = _consoleFontSize + 20;
+            _consoleSkin.button.wordWrap = true;
         }
 
         private void DrawSkillControls()
