@@ -26,3 +26,4 @@ Game 뷰가 작으면 좌측 스킬 콘솔과 수치 창에서 스크롤하세�
 Unity EditMode 테스트는 같은 계약과 두 SO 에셋 로딩을 검사합니다.
 스킬 데이터 형식은 [스킬 명세](docs/SKILL_SYSTEM_SPEC.md)를 참고하세요.
 치명타·Haste·처치 버프의 적용 기준은 [공통 전투 수치 기획 명세](docs/COMBAT_STATS_AND_BUFFS_DESIGN.md)에 정리했습니다.
+현재 상태와 다음 작업의 검증 순서는 [인수인계 문서](docs/HANDOFF_SKILL_SYSTEM_2026-09-25.md)를 참고하세요.
