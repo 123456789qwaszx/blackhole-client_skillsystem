@@ -114,7 +114,7 @@ namespace BlackHole.Unity
             float width = Mathf.Min(400, (Screen.width - 36) * 0.42f);
             DrawSkillConsole(new Rect(12, 12, width, Mathf.Min(280, Screen.height * 0.65f)));
             DrawEnemyConsole(new Rect(Screen.width - width - 12, 12, width,
-                Mathf.Min(520, Screen.height * 0.7f)));
+                Mathf.Min(300, Screen.height * 0.6f)));
             GUI.skin = previous;
         }
 
@@ -141,17 +141,15 @@ namespace BlackHole.Unity
         {
             GUILayout.BeginArea(area, GUI.skin.box);
             _enemyScroll = GUILayout.BeginScrollView(_enemyScroll);
-            GUILayout.Label("Enemy Stats");
+            GUILayout.Label("Enemy HP");
             if (_battle != null)
             {
                 IReadOnlyList<EnemyTarget> enemies = _battle.Enemies;
                 for (int i = 0; i < enemies.Count; i++)
                 {
                     EnemyTarget enemy = enemies[i];
-                    GUILayout.Label($"Enemy {i + 1} ({enemy.Position.X}, {enemy.Position.Y})");
+                    GUILayout.Label($"Enemy {i + 1}");
                     GUILayout.Label($"HP {enemy.Health:0.0} / {enemy.MaxHealth:0.0}");
-                    GUILayout.Label($"State: {(enemy.IsAlive ? "Alive" : "Dead")}");
-                    GUILayout.Label($"Last hit by: {(enemy.LastAttacker?.ToString() ?? "-")}");
                     GUILayout.Space(8);
                 }
             }
