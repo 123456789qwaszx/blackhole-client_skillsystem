@@ -1,4 +1,4 @@
-# Skill-only sandbox
+# Combat core sandbox
 
 스킬 수치는 [`Config/SkillCatalog.asset`](../Assets/BlackHole/SkillSystem/Config/SkillCatalog.asset)의
 `Skills` 목록에 저장한다. 각 항목은 `Type`과 해당 스킬의 `Stats`를 담는다.

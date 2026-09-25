@@ -1,6 +1,6 @@
 # BlackHole Skill Sandbox
 
-`skill-only-sandbox` 브랜치는 스킬의 실행만 확인합니다. 노드·업그레이드·레벨은 없습니다.
+`skill-only-sandbox` 브랜치는 스킬 공격과 천체 사망 효과를 확인합니다. 노드·업그레이드·레벨은 없습니다.
 
 - `Assets/BlackHole/SkillSystem/Core`: Breaker, PiercingLaser, 스킬 데이터 검증
 - `Assets/BlackHole/SkillSystem/TestPack`: HP가 있는 고정 적과 재현 가능한 전투 환경

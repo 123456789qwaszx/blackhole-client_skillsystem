@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlackHole.Skills.TestPack
 {
-    // 이동·보상·성장 없이 스킬 실행만 확인하는 작은 전투 팩.
+    // 이동·보상·성장 없이 스킬 공격과 천체 사망 효과를 확인하는 전투 팩.
     public sealed class SkillBattle
     {
         private readonly List<EnemyTarget> _enemies = new List<EnemyTarget>();

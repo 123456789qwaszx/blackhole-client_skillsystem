@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 namespace BlackHole.Unity
 {
-    // 샘플 씬의 진입점. 실제 게임 규칙이 아니라 스킬 발동과 적 피해를 눈으로 확인하는 샌드박스다.
+    // 샘플 씬의 진입점. 스킬과 천체 사망 효과를 눈으로 확인하는 샌드박스다.
     public sealed class GameHost : MonoBehaviour
     {
         [SerializeField] private SkillCatalogAsset _skillCatalog;
