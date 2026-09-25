@@ -27,7 +27,6 @@ namespace BlackHole.Unity
         private int _styledFontSize;
         private Vector2 _skillScroll;
         private Vector2 _detailsScroll;
-        private Vector2 _enemyScroll;
         private SkillType? _selectedSkill;
 
         private void Awake()
@@ -119,8 +118,10 @@ namespace BlackHole.Unity
             if (_selectedSkill.HasValue && _catalog != null)
                 DrawSkillDetails(new Rect(12, 20 + skillHeight, width,
                     Mathf.Max(0, Screen.height - skillHeight - 32)));
+            float enemyHeight = 32 + _consoleFontSize + 20 +
+                (_battle?.Enemies.Count ?? 0) * (_consoleFontSize * 2 + 16);
             DrawEnemyConsole(new Rect(Screen.width - width - 12, 12, width,
-                Mathf.Min(300, Screen.height * 0.6f)));
+                Mathf.Min(enemyHeight, Screen.height - 24)));
             GUI.skin = previous;
         }
 
@@ -139,25 +140,21 @@ namespace BlackHole.Unity
         private void DrawEnemyConsole(Rect area)
         {
             GUILayout.BeginArea(area, GUI.skin.box);
-            GUILayout.Label("Enemy HP");
             if (_battle != null && GUILayout.Button("Restart test"))
             {
                 _battle.End();
                 StartBattle();
             }
-            _enemyScroll = GUILayout.BeginScrollView(_enemyScroll);
             if (_battle != null)
             {
                 IReadOnlyList<EnemyTarget> enemies = _battle.Enemies;
                 for (int i = 0; i < enemies.Count; i++)
                 {
                     EnemyTarget enemy = enemies[i];
-                    GUILayout.Label($"Enemy {i + 1}");
-                    GUILayout.Label($"HP {enemy.Health:0.0} / {enemy.MaxHealth:0.0}");
+                    GUILayout.Label($"Enemy {i + 1}: HP {enemy.Health:0.0} / {enemy.MaxHealth:0.0}");
                     GUILayout.Space(8);
                 }
             }
-            GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
 
@@ -178,7 +175,6 @@ namespace BlackHole.Unity
         private void DrawSkillControls()
         {
             if (_statusCircle == null) _statusCircle = CreateStatusCircle();
-            GUILayout.Label("Skills (circle = active, name = stats)");
             foreach (SkillType skill in _catalog.AvailableSkills)
             {
                 GUILayout.BeginHorizontal();
