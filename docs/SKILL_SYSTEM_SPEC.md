@@ -21,6 +21,9 @@ SO의 `Load()`는 목록을 순수 C# `SkillCatalog.Load()`에 넘긴다.
 
 ## Enemy Death Effect
 
+공통 전투 수치와 두 처치 버프의 다음 구현 기준은
+[스킬 공통 전투 수치·처치 버프 기획 명세](COMBAT_STATS_AND_BUFFS_DESIGN.md)를 참고한다.
+
 [`Config/EnemyCatalog.asset`](../Assets/BlackHole/SkillSystem/Config/EnemyCatalog.asset)에서
 적 ID·HP·사망 효과를 저작한다. 코어의 `EnemyCatalog.Load`는 ID 중복, 잘못된 HP·효과 수치를
 전투 전에 검사하고 정의를 복사한다. `DeathEffectType.None`은 효과가 없는 일반 적이다.
