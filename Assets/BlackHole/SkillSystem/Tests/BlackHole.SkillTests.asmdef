@@ -1,0 +1,7 @@
+{
+  "name": "BlackHole.SkillTests",
+  "references": ["BlackHole.Skills", "BlackHole.SkillTestPack"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": true
+}

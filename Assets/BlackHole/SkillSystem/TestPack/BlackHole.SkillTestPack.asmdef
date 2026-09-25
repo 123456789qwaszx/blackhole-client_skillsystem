@@ -1,0 +1,6 @@
+{
+  "name": "BlackHole.SkillTestPack",
+  "rootNamespace": "BlackHole.Skills.TestPack",
+  "references": ["BlackHole.Skills"],
+  "noEngineReferences": true
+}

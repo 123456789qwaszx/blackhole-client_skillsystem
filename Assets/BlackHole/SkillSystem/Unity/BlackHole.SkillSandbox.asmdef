@@ -1,0 +1,4 @@
+{
+  "name": "BlackHole.SkillSandbox",
+  "references": ["BlackHole.Skills", "BlackHole.SkillTestPack", "Unity.InputSystem"]
+}

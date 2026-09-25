@@ -1,5 +1,0 @@
-{
-  "name": "BlackHole.Unity",
-  "rootNamespace": "BlackHole.Unity",
-  "references": ["BlackHole.Core", "BlackHole.Sample", "Unity.InputSystem"]
-}

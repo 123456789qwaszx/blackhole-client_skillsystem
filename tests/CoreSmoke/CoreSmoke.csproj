@@ -7,9 +7,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Assets/BlackHole/Core/**/*.cs" />
-    <Compile Include="../../Assets/BlackHole/Sample/**/*.cs" />
-    <Compile Include="../../Assets/BlackHole/Tests/EditMode/Contracts/**/*.cs" />
+    <Compile Include="../../Assets/BlackHole/SkillSystem/Core/**/*.cs" />
+    <Compile Include="../../Assets/BlackHole/SkillSystem/TestPack/**/*.cs" />
+    <Compile Include="../../Assets/BlackHole/SkillSystem/Tests/SkillContracts.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>
