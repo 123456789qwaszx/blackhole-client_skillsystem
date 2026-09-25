@@ -29,10 +29,10 @@ namespace BlackHole.Skills
     public abstract class SkillRuntime
     {
         public SkillType Type { get; }
-        protected readonly UpgradeStat Stats;
+        protected readonly SkillStats Stats;
         protected readonly int PlayerId;
 
-        protected SkillRuntime(SkillType type, UpgradeStat stats, int playerId)
+        protected SkillRuntime(SkillType type, SkillStats stats, int playerId)
         {
             Type = type;
             Stats = stats.Copy();
@@ -42,7 +42,7 @@ namespace BlackHole.Skills
         public abstract void Advance(float delta, Point2? aim, IReadOnlyList<ISkillTarget> targets,
             ISkillRandom random, float arenaRadius);
 
-        public static SkillRuntime Create(SkillType type, UpgradeStat stats, int playerId)
+        public static SkillRuntime Create(SkillType type, SkillStats stats, int playerId)
         {
             if (stats == null) throw new ArgumentNullException(nameof(stats));
             switch (type)
@@ -67,7 +67,7 @@ namespace BlackHole.Skills
         public int TickCount { get; private set; }
         public int LastHitCount { get; private set; }
 
-        internal BreakerRuntime(UpgradeStat stats, int playerId) : base(SkillType.Breaker, stats, playerId) { }
+        internal BreakerRuntime(SkillStats stats, int playerId) : base(SkillType.Breaker, stats, playerId) { }
 
         public override void Advance(float delta, Point2? aim, IReadOnlyList<ISkillTarget> targets,
             ISkillRandom random, float arenaRadius)
@@ -112,7 +112,7 @@ namespace BlackHole.Skills
         public int LastHitCount { get; private set; }
         public LaserShot? LastFired { get; private set; }
 
-        internal LaserRuntime(UpgradeStat stats, int playerId) : base(SkillType.PiercingLaser, stats, playerId) { }
+        internal LaserRuntime(SkillStats stats, int playerId) : base(SkillType.PiercingLaser, stats, playerId) { }
 
         public override void Advance(float delta, Point2? aim, IReadOnlyList<ISkillTarget> targets,
             ISkillRandom random, float arenaRadius)

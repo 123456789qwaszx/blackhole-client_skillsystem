@@ -6,11 +6,10 @@ namespace BlackHole.Skills.TestPack
     // 이동·보상·성장 없이 스킬 실행만 확인하는 작은 전투 팩.
     public sealed class SkillBattle
     {
-        private readonly SkillProgress _progress;
         private readonly List<EnemyTarget> _enemies = new List<EnemyTarget>();
         private readonly List<SkillRuntime> _skills = new List<SkillRuntime>();
         private readonly List<bool> _enabled = new List<bool>();
-        private readonly IReadOnlyDictionary<SkillType, UpgradeStat> _stats;
+        private readonly SkillCatalog _catalog;
         private readonly ISkillRandom _random;
         private readonly float _arenaRadius;
         private readonly int _playerId;
@@ -20,25 +19,22 @@ namespace BlackHole.Skills.TestPack
         public IReadOnlyList<SkillRuntime> Skills => _skills.AsReadOnly();
         public Point2? Aim { get; set; }
 
-        public SkillBattle(SkillProgress progress, int playerId, float arenaRadius, ISkillRandom random)
+        public SkillBattle(SkillCatalog catalog, int playerId, float arenaRadius, ISkillRandom random)
         {
-            if (progress == null) throw new ArgumentNullException(nameof(progress));
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (random == null) throw new ArgumentNullException(nameof(random));
             if (float.IsNaN(arenaRadius) || float.IsInfinity(arenaRadius) || arenaRadius <= 0)
                 throw new ArgumentOutOfRangeException(nameof(arenaRadius));
-            _progress = progress;
+            _catalog = catalog;
             _playerId = playerId;
             _random = random;
             _arenaRadius = arenaRadius;
 
-            _stats = progress.Snapshot();
-            foreach (SkillType type in (SkillType[])Enum.GetValues(typeof(SkillType)))
-                if (_stats.TryGetValue(type, out UpgradeStat value))
-                {
-                    _skills.Add(SkillRuntime.Create(type, value, playerId));
-                    _enabled.Add(true);
-                }
-            _progress.BeginBattle();
+            foreach (SkillType type in catalog.AvailableSkills)
+            {
+                _skills.Add(SkillRuntime.Create(type, catalog.StatsFor(type), playerId));
+                _enabled.Add(true);
+            }
         }
 
         public bool IsSkillEnabled(SkillType type)
@@ -57,7 +53,7 @@ namespace BlackHole.Skills.TestPack
                 if (_enabled[i] == enabled) return true;
                 _enabled[i] = enabled;
                 // 중지할 때 진행 중인 예고와 타이머도 버린다. 재활성화는 새 실행으로 시작한다.
-                if (!enabled) _skills[i] = SkillRuntime.Create(type, _stats[type], _playerId);
+                if (!enabled) _skills[i] = SkillRuntime.Create(type, _catalog.StatsFor(type), _playerId);
                 return true;
             }
             return false;
@@ -83,7 +79,6 @@ namespace BlackHole.Skills.TestPack
         {
             if (_ended) return;
             _ended = true;
-            _progress.EndBattle();
         }
     }
 

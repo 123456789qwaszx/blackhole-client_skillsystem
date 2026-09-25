@@ -1,55 +1,23 @@
-# Skill System — gameplay.json 계약
+# Skill-only sandbox
 
-## 남긴 범위
+`gameplay.json`에는 `Version: 1`과 `Skills` 목록만 있다.
+각 항목은 `Type`과 해당 스킬의 `Stats`를 담는다. 샘플 파일은
+[`Resources/gameplay.json`](../Assets/BlackHole/SkillSystem/Resources/gameplay.json)에 있다.
 
-- 패시브 Skill: Breaker(마우스 주변 원형 공격), PiercingLaser(예고 후 직선 관통).
-- `NodeId`로 스킬 레벨을 한 단계 올리는 전투 밖 업그레이드.
-- 스킬이 실제로 적의 HP를 감소시키는 최소 TestPack.
-
-적 이동, 천체의 사망 효과, 보상, 성장, 세션 종료, 골드, 가격, 스킬 트리의
-연결 규칙과 화면 배치 정보는 여기서 다루지 않는다. NodeId와 화면상의 위치를
-연결할 `upgrade-layout.json` 및 트리 UI는 별도 작업이다.
-
-## 데이터 흐름
-
-```text
-Resources/gameplay.json
-→ GameplayData (Unity JsonUtility 등 호스트가 역직렬화)
-→ SkillCatalog.Load: 유효성 검증 + Dictionary<SkillType, UpgradeStat[]>
-→ SkillProgress.Purchase(nodeId): 다음 레벨 구매
-→ SkillProgress.Snapshot(): 전투 시작 시 레벨별 완성 수치
-→ BreakerRuntime / LaserRuntime → ISkillTarget.Hit
-```
-
-코어는 파일 IO나 Unity API를 사용하지 않는다. `SkillCatalog.Load`에는 역직렬화된
-`GameplayData`를 전달한다. 샘플 `GameHost`만 Resources에서 파일을 읽는다.
-
-`Skills[].Levels[0]`은 Lv1, `[1]`은 Lv2다. 이 안의 `UpgradeStat`은
-증가량이 아닌 **완성된 수치**다. 스킬 종류별로 필요한 필드는 다음과 같다.
-
-| Type | 필수 수치 | 뜻 |
+| Type | 필요한 수치 | 의미 |
 | --- | --- | --- |
-| Breaker | Damage, Interval, Radius | 피해, 공격 간격(초), 조준 반경 |
-| PiercingLaser | Damage, Interval, Width, TelegraphDuration | 피해, 예고 시작 간격(초), 폭, 예고 시간(초) |
+| Breaker | Damage, Interval, Radius | 피해, 반복 간격(초), 조준 반경 |
+| PiercingLaser | Damage, Interval, Width, TelegraphDuration | 피해, 예고 간격(초), 폭, 예고 길이(초) |
 
-사용하지 않는 수치는 0이어야 한다. 모든 사용 수치는 유한한 양수이며,
-중복 스킬·NodeId·동일 스킬 레벨 노드와 정의되지 않은 참조를 거부한다.
-`Version`은 1이다. 파일의 실제 예시는
-[`gameplay.json`](../Assets/BlackHole/SkillSystem/Resources/gameplay.json)에 있다.
+`SkillCatalog.Load`는 종류별 수치를 검사해 `SkillType → SkillStats`로 보관한다.
+사용하는 수치는 유한한 양수여야 하고, 사용하지 않는 수치는 0이어야 한다.
+중복 종류나 알 수 없는 종류는 진단과 함께 거부한다. 파일 IO/역직렬화는
+Unity 호스트가 맡으며 코어는 순수 C#이다.
 
-`StartingSkills`의 스킬은 Lv1로 시작한다. 그 밖에는 Lv0(미획득)이다.
-`Upgrades[]`는 `Id`, `Skill`, `Level`을 지정한다. `Purchase(nodeId)`는
-해당 노드의 `Level`이 현재 레벨보다 정확히 하나 높을 때만 구매한다.
-따라서 순서대로 노드를 눌러야 하지만 연결선·가격 조건은 없다.
-전투 중에는 구매할 수 없고 전투는 시작 시 찍은 수치 스냅샷만 사용한다.
-진행 상태는 플레이어마다 별도이며 `PurchasedNodes`를 저장할 수 있다
-(실제 저장/불러오기는 아직 없다).
+테스트 전투는 정의된 스킬을 모두 독립 실행 상태로 만들고 체크박스에서
+스킬별 발동을 켜고 끈다. 끄면 공격 타이머와 진행 중인 레이저 예고를 버리고,
+다시 켜면 처음부터 실행한다. 각 전투/플레이어는 실행 상태를 공유하지 않는다.
+`TestPack`의 적은 HP와 마지막 공격자만 기록한다.
 
-Unity 샘플 콘솔은 카탈로그의 스킬을 나열한다. Lv0은 잠금 상태이며,
-보유한 스킬은 체크박스로 발동을 끄거나 켤 수 있다. 끄면 예고 중인
-레이저와 남은 타이머를 버리고, 다시 켤 때 새 실행으로 시작한다.
-콘솔의 체크 상태는 다음 테스트 전투에도 유지되며 `gameplay.json`이나
-영구 진행 상태에는 저장되지 않는다.
-
-새 스킬 종류는 `SkillType`, 해당 종류의 필수 수치 검증, `SkillRuntime.Create`의
-실행 구현을 추가한다. 레벨 추가와 수치 변경은 JSON 수정만으로 끝난다.
+이 브랜치에는 노드 ID, 구매, 골드, 레벨, 업그레이드 효과, 트리 화면 정보가 없다.
+업그레이드를 개발할 때는 별도 브랜치에서 게임 규칙을 연결한다.

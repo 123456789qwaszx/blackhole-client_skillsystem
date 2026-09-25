@@ -3,25 +3,11 @@
   "Skills": [
     {
       "Type": "Breaker",
-      "Levels": [
-        { "Damage": 2, "Interval": 1, "Radius": 1.5 },
-        { "Damage": 4, "Interval": 0.7, "Radius": 2.0 },
-        { "Damage": 8, "Interval": 0.5, "Radius": 2.5 }
-      ]
+      "Stats": { "Damage": 2, "Interval": 1, "Radius": 1.5 }
     },
     {
       "Type": "PiercingLaser",
-      "Levels": [
-        { "Damage": 3, "Interval": 4, "Width": 0.5, "TelegraphDuration": 0.4 },
-        { "Damage": 6, "Interval": 3, "Width": 0.8, "TelegraphDuration": 0.3 }
-      ]
+      "Stats": { "Damage": 3, "Interval": 4, "Width": 0.5, "TelegraphDuration": 0.4 }
     }
-  ],
-  "StartingSkills": ["Breaker"],
-  "Upgrades": [
-    { "Id": "breaker-2", "Skill": "Breaker", "Level": 2 },
-    { "Id": "breaker-3", "Skill": "Breaker", "Level": 3 },
-    { "Id": "laser-unlock", "Skill": "PiercingLaser", "Level": 1 },
-    { "Id": "laser-2", "Skill": "PiercingLaser", "Level": 2 }
   ]
 }

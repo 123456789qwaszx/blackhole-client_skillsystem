@@ -1,7 +1,7 @@
-name: Core contracts
+name: Skill contracts
 on:
   push:
-    branches: [dev, main]
+    branches: [dev, main, skill-only-sandbox]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -14,5 +14,5 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Compile pure rules and run contracts
+      - name: Run skill contracts
         run: dotnet run --project tests/CoreSmoke/CoreSmoke.csproj --configuration Release

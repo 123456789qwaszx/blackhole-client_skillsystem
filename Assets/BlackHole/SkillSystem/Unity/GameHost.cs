@@ -17,7 +17,6 @@ namespace BlackHole.Unity
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
         private readonly Dictionary<SkillType, bool> _enabledBySkill = new Dictionary<SkillType, bool>();
         private SkillCatalog _catalog;
-        private SkillProgress _progress;
         private SkillBattle _battle;
         private Camera _camera;
         private string _message;
@@ -40,7 +39,6 @@ namespace BlackHole.Unity
                 return;
             }
             _catalog = result.Catalog;
-            _progress = new SkillProgress(_catalog);
             foreach (SkillType skill in _catalog.AvailableSkills) _enabledBySkill.Add(skill, true);
             _camera = Camera.main;
             if (_camera != null) { _camera.orthographic = true; _camera.orthographicSize = 11; }
@@ -63,7 +61,7 @@ namespace BlackHole.Unity
         private void StartBattle()
         {
             ClearEnemies();
-            _battle = new SkillBattle(_progress, 1, _arenaRadius, new FixedRandom(0));
+            _battle = new SkillBattle(_catalog, 1, _arenaRadius, new FixedRandom(0));
             foreach (var choice in _enabledBySkill)
                 if (!choice.Value) _battle.SetSkillEnabled(choice.Key, false);
             AddEnemy(new Point2(0, 0));
@@ -97,7 +95,7 @@ namespace BlackHole.Unity
 
         private void OnEnable()
         {
-            if (_progress != null && _battle == null) StartBattle();
+            if (_catalog != null && _battle == null) StartBattle();
         }
 
         private void OnDestroy()
@@ -127,19 +125,9 @@ namespace BlackHole.Unity
             GUILayout.Label("Skill Sandbox / aim: mouse");
             if (_catalog == null) { GUILayout.Label(_message); return; }
             DrawSkillControls();
-            if (_battle != null)
-            {
-                foreach (EnemyTarget enemy in _battle.Enemies)
-                    GUILayout.Label($"Enemy ({enemy.Position.X}, {enemy.Position.Y}) HP {enemy.Health:0.0}");
-                if (GUILayout.Button("End battle")) { _battle.End(); _battle = null; ClearEnemies(); }
-            }
-            else
-            {
-                foreach (var node in _catalog.Nodes)
-                    if (GUILayout.Button("Buy " + node.Key))
-                        _message = node.Key + ": " + _progress.Purchase(node.Key);
-                if (GUILayout.Button("Start battle")) StartBattle();
-            }
+            foreach (EnemyTarget enemy in _battle.Enemies)
+                GUILayout.Label($"Enemy ({enemy.Position.X}, {enemy.Position.Y}) HP {enemy.Health:0.0}");
+            if (GUILayout.Button("Restart test")) { _battle.End(); StartBattle(); }
             GUILayout.Label(_message);
         }
 
@@ -159,21 +147,10 @@ namespace BlackHole.Unity
 
         private void DrawSkillControls()
         {
-            GUILayout.Label("Available Skills (checked = active)");
+            GUILayout.Label("Skills (checked = active)");
             foreach (SkillType skill in _catalog.AvailableSkills)
             {
-                int level = _progress.Level(skill);
-                string label = $"{skill}  Lv {level} / {_catalog.MaxLevel(skill)}";
-                if (level == 0)
-                {
-                    bool wasEnabled = GUI.enabled;
-                    GUI.enabled = false;
-                    GUILayout.Toggle(false, label + " (locked)");
-                    GUI.enabled = wasEnabled;
-                    continue;
-                }
-
-                bool selected = GUILayout.Toggle(_enabledBySkill[skill], label);
+                bool selected = GUILayout.Toggle(_enabledBySkill[skill], skill.ToString());
                 if (selected == _enabledBySkill[skill]) continue;
                 _enabledBySkill[skill] = selected;
                 _battle?.SetSkillEnabled(skill, selected);
