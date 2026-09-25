@@ -124,14 +124,7 @@ namespace BlackHole.Unity
             _skillScroll = GUILayout.BeginScrollView(_skillScroll);
             GUILayout.Label("Skill Sandbox / aim: mouse");
             if (_catalog != null)
-            {
                 DrawSkillControls();
-                if (_battle != null && GUILayout.Button("Restart test"))
-                {
-                    _battle.End();
-                    StartBattle();
-                }
-            }
             GUILayout.Label(_message);
             GUILayout.EndScrollView();
             GUILayout.EndArea();
@@ -140,8 +133,13 @@ namespace BlackHole.Unity
         private void DrawEnemyConsole(Rect area)
         {
             GUILayout.BeginArea(area, GUI.skin.box);
-            _enemyScroll = GUILayout.BeginScrollView(_enemyScroll);
             GUILayout.Label("Enemy HP");
+            if (_battle != null && GUILayout.Button("Restart test"))
+            {
+                _battle.End();
+                StartBattle();
+            }
+            _enemyScroll = GUILayout.BeginScrollView(_enemyScroll);
             if (_battle != null)
             {
                 IReadOnlyList<EnemyTarget> enemies = _battle.Enemies;
