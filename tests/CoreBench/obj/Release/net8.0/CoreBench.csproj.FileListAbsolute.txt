@@ -1,0 +1,15 @@
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\bin\Release\net8.0\CoreBench.exe
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\bin\Release\net8.0\CoreBench.deps.json
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\bin\Release\net8.0\CoreBench.runtimeconfig.json
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\bin\Release\net8.0\CoreBench.dll
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\bin\Release\net8.0\CoreBench.pdb
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.AssemblyInfoInputs.cache
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.AssemblyInfo.cs
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.csproj.CoreCompileInputs.cache
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.sourcelink.json
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.dll
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\refint\CoreBench.dll
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.pdb
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\CoreBench.genruntimeconfig.cache
+C:\Users\river\Documents\GitHub\blackhole-client\tests\CoreBench\obj\Release\net8.0\ref\CoreBench.dll
