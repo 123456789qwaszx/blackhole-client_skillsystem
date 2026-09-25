@@ -28,6 +28,8 @@ namespace BlackHole.Skills.Tests
             yield return ("Battle.AttackIntervalHasMinimum", AttackIntervalHasMinimum);
             yield return ("Buff.CriticalExpiresAtAttackBoundary", CriticalExpiresAtAttackBoundary);
             yield return ("Crit.DirectionStreamIsIndependent", DirectionStreamIsIndependent);
+            yield return ("Visual.BreakerPulseMatchesAttack", BreakerPulseMatchesAttack);
+            yield return ("Visual.LaserFireMatchesTelegraph", LaserFireMatchesTelegraph);
         }
 
         private static List<SkillData> Data() => new List<SkillData>
@@ -418,6 +420,48 @@ namespace BlackHole.Skills.Tests
             Equal(a.Start.X, b.Start.X);
             Equal(a.Start.Y, b.Start.Y);
             plain.End(); critical.End();
+        }
+
+        private static void BreakerPulseMatchesAttack()
+        {
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
+            battle.Aim = new Point2(3, -2);
+            battle.Advance(0);
+            Equal(1, battle.LastSkillVisuals.Count);
+            SkillVisual pulse = battle.LastSkillVisuals[0];
+            Equal(SkillVisualKind.BreakerPulse, pulse.Kind);
+            Equal(1, pulse.PlayerId);
+            Equal(3f, pulse.Center.X);
+            Equal(-2f, pulse.Center.Y);
+            Equal(1f, pulse.Radius);
+            Equal(0, battle.LastSkillHits.Count);
+            battle.Advance(0.1f);
+            Equal(0, battle.LastSkillVisuals.Count);
+            battle.SetSkillEnabled(SkillType.Breaker, false);
+            battle.Advance(1);
+            Equal(0, battle.LastSkillVisuals.Count);
+            battle.End();
+        }
+
+        private static void LaserFireMatchesTelegraph()
+        {
+            var battle = new SkillBattle(Catalog(), 1, 10, new FixedRandom(0));
+            battle.SetSkillEnabled(SkillType.Breaker, false);
+            battle.Aim = new Point2(0, 0);
+            battle.Advance(0);
+            LaserShot pending = ((LaserRuntime)battle.Skills[0]).PendingShots[0];
+            Equal(0, battle.LastSkillVisuals.Count);
+            battle.Advance(0.4f);
+            Equal(1, battle.LastSkillVisuals.Count);
+            SkillVisual fire = battle.LastSkillVisuals[0];
+            Equal(SkillVisualKind.LaserFire, fire.Kind);
+            Equal(1, fire.PlayerId);
+            Equal(pending.Start.X, fire.Start.X);
+            Equal(pending.End.X, fire.End.X);
+            Equal(1f, fire.Width);
+            Equal(0, battle.LastSkillHits.Count);
+            battle.End();
         }
 
         private sealed class CountingRandom : ISkillRandom

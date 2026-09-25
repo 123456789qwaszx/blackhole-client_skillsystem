@@ -20,6 +20,7 @@ namespace BlackHole.Unity
         private PlayerCombatStats _combatStats;
         private EnemyCatalog _enemies;
         private SkillBattle _battle;
+        private SkillEffectsView _effects;
         private Camera _camera;
         private string _message;
         private Sprite _enemySprite;
@@ -51,6 +52,8 @@ namespace BlackHole.Unity
             _camera = Camera.main;
             if (_camera != null) { _camera.orthographic = true; _camera.orthographicSize = 11; }
             _enemySprite = CreateEnemySprite();
+            _effects = gameObject.GetComponent<SkillEffectsView>();
+            if (_effects == null) _effects = gameObject.AddComponent<SkillEffectsView>();
             StartBattle();
         }
 
@@ -63,11 +66,13 @@ namespace BlackHole.Unity
                 _battle.Aim = new Point2(position.x, position.y);
             }
             _battle.AdvanceFrame(Time.deltaTime);
+            _effects.Render(_battle, Time.deltaTime);
             foreach (EnemyView view in _enemyViews) view.Refresh();
         }
 
         private void StartBattle()
         {
+            _effects.Clear();
             ClearEnemies();
             _battle = new SkillBattle(_catalog, 1, _arenaRadius, 0x4d5b0201u, _combatStats);
             foreach (var choice in _enabledBySkill)
@@ -100,6 +105,7 @@ namespace BlackHole.Unity
         {
             _battle?.End();
             _battle = null;
+            if (_effects != null) _effects.Clear();
             ClearEnemies();
         }
 

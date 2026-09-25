@@ -2,7 +2,7 @@
 
 `skill-only-sandbox` 브랜치는 스킬 공격과 천체 사망 효과를 확인합니다. 노드·업그레이드·레벨은 없습니다.
 
-- `Assets/BlackHole/SkillSystem/Core`: Breaker, PiercingLaser, 스킬 데이터 검증
+- `Assets/BlackHole/SkillSystem/Core`: 독립된 `BreakerRuntime`·`LaserRuntime`, 공통 피해·스킬 데이터 검증
 - `Assets/BlackHole/SkillSystem/TestPack`: HP가 있는 고정 적과 재현 가능한 전투 환경
 - `Assets/BlackHole/SkillSystem/Config/SkillCatalog.asset`: Inspector에서 수정하는 두 스킬의 기본 수치
 - `Assets/BlackHole/SkillSystem/Config/EnemyCatalog.asset`: 적 HP와 사망 효과 수치
@@ -20,7 +20,7 @@ Unity의 `Assets/Scenes/SampleScene.unity`를 Play하고 마우스로 적을 조
 우측 적 콘솔의 `Restart test`는 적의 HP와 스킬 타이머를 다시 시작하며 체크 상태는 유지합니다.
 Play 중 `GameHost/Enemy`를 선택하면 Inspector에서도 HP를 볼 수 있습니다.
 콘솔 글자 크기는 기본 26이며 `GameHost` Inspector의 Console Font Size로 조절합니다.
-Game 뷰가 작으면 좌측 스킬 콘솔과 수치 창에서 스크롤하세요. 레이저 경로는 Gizmos를 켜면 보입니다.
+Game 뷰가 작으면 좌측 스킬 콘솔과 수치 창에서 스크롤하세요. Game 뷰에는 Breaker 공격 원, Laser 예고선·발사선, 적중 표시와 폭발·연쇄 번개·처치 버프 이펙트가 표시됩니다. 이 선과 원은 공격·사망 효과 기록을 그리며 피해를 다시 계산하지 않습니다.
 
 코어 계약 확인: `dotnet run --project tests/CoreSmoke/CoreSmoke.csproj --configuration Release`.
 Unity EditMode 테스트는 같은 계약과 두 SO 에셋 로딩을 검사합니다.

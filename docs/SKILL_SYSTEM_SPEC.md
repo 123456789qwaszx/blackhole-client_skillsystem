@@ -19,6 +19,9 @@ SO의 `Load()`는 목록을 순수 C# `SkillCatalog.Load()`에 넘긴다.
 스킬별 발동을 켜고 끈다. 끄면 공격 타이머와 진행 중인 레이저 예고를 버리고,
 다시 켜면 처음부터 실행한다. 각 전투/플레이어는 실행 상태를 공유하지 않는다.
 `TestPack`의 적은 HP를 기록하며 위치는 스킬의 적중 판정에 사용한다.
+`BreakerRuntime`과 `LaserRuntime`은 각각 독립된 코어 클래스다. 매 공격의 형상은
+`LastSkillVisuals`에 모으고, Unity `SkillEffectsView`가 Game 뷰에 그린다. Laser의
+진행 중인 예고는 `PendingShots`에서 읽는다. 이펙트는 피해 판정에 관여하지 않는다.
 
 ## Enemy Death Effect
 

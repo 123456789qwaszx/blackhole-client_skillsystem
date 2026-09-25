@@ -17,6 +17,7 @@ namespace BlackHole.Skills.TestPack
         private readonly PlayerCombatStats _combatStats;
         private readonly List<EffectHit> _recentEffectHits = new List<EffectHit>();
         private readonly List<EffectActivation> _recentEffectActivations = new List<EffectActivation>();
+        private readonly List<SkillVisual> _recentSkillVisuals = new List<SkillVisual>();
         private readonly SkillCatalog _catalog;
         private readonly ISkillRandom _random;
         private readonly float _arenaRadius;
@@ -29,6 +30,7 @@ namespace BlackHole.Skills.TestPack
         public IReadOnlyList<EffectHit> LastEffectHits => _recentEffectHits;
         public IReadOnlyList<EffectActivation> LastEffectActivations => _recentEffectActivations;
         public IReadOnlyList<SkillHit> LastSkillHits => _damage.LastHits;
+        public IReadOnlyList<SkillVisual> LastSkillVisuals => _recentSkillVisuals;
         public PlayerBuffs Buffs => _buffs;
         public Point2? Aim { get; set; }
 
@@ -137,6 +139,7 @@ namespace BlackHole.Skills.TestPack
             _damage.BeginFrame();
             _recentEffectHits.Clear();
             _recentEffectActivations.Clear();
+            _recentSkillVisuals.Clear();
         }
 
         private float NextStep(float remaining)
@@ -161,8 +164,11 @@ namespace BlackHole.Skills.TestPack
                 if (_enabled[i]) _stepRates[i] = AttackRate(i);
             _buffs.Advance(delta);
             for (int i = 0; i < _skills.Count; i++)
-                if (_enabled[i]) _skills[i].Advance(delta, Aim, targets, _random, _arenaRadius,
-                    _damage, _stepRates[i]);
+            {
+                if (!_enabled[i]) continue;
+                _skills[i].Advance(delta, Aim, targets, _random, _arenaRadius, _damage, _stepRates[i]);
+                foreach (SkillVisual visual in _skills[i].LastVisuals) _recentSkillVisuals.Add(visual);
+            }
             IReadOnlyList<IDeathEffectTarget> effectTargets = _enemies;
             _deathEffects.Resolve(effectTargets, _buffs);
             foreach (EffectHit hit in _deathEffects.LastHits) _recentEffectHits.Add(hit);
