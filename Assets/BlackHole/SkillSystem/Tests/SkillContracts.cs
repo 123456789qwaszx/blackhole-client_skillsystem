@@ -13,7 +13,9 @@ namespace BlackHole.Skills.Tests
             yield return ("Upgrade.ClickAdvancesOnlyTargetSkill", ClickAdvancesOnlyTargetSkill);
             yield return ("Upgrade.OnlyBetweenBattles", OnlyBetweenBattles);
             yield return ("Breaker.HitsAimRadiusWithLevelStats", BreakerHitsAimRadiusWithLevelStats);
+            yield return ("Breaker.DisableStopsAttacksAndEnableRestarts", DisableStopsBreaker);
             yield return ("Laser.TelegraphThenHitsPath", LaserTelegraphThenHitsPath);
+            yield return ("Laser.DisableDiscardsPendingShot", DisableDiscardsPendingLaser);
             yield return ("Battle.PlayersKeepIndependentLevels", PlayersKeepIndependentLevels);
         }
 
@@ -134,6 +136,44 @@ namespace BlackHole.Skills.Tests
             Equal(10f, outside.Health);
             Equal(3, onPath.LastAttacker.Value);
             Equal(1, ((LaserRuntime)battle.Skills[1]).FireCount);
+            battle.End();
+        }
+
+        private static void DisableStopsBreaker()
+        {
+            var battle = new SkillBattle(new SkillProgress(Catalog()), 1, 10, new FixedRandom(0));
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget enemy = battle.AddEnemy(new Point2(0, 0), 10);
+            Check(battle.IsSkillEnabled(SkillType.Breaker), "시작 스킬은 기본으로 켜진다.");
+            Check(!battle.SetSkillEnabled(SkillType.PiercingLaser, true), "미획득 스킬은 켤 수 없다.");
+            Check(battle.SetSkillEnabled(SkillType.Breaker, false), "보유 스킬을 끈다.");
+            battle.Advance(3);
+            Equal(10f, enemy.Health);
+            Check(battle.SetSkillEnabled(SkillType.Breaker, true), "보유 스킬을 다시 켠다.");
+            battle.Advance(0);
+            Equal(8f, enemy.Health);
+            battle.End();
+        }
+
+        private static void DisableDiscardsPendingLaser()
+        {
+            var progress = new SkillProgress(Catalog());
+            progress.Purchase("laser-unlock");
+            var battle = new SkillBattle(progress, 1, 10, new FixedRandom(0));
+            battle.Aim = new Point2(0, 0);
+            EnemyTarget enemy = battle.AddEnemy(new Point2(2, 0), 10);
+            battle.Advance(0);
+            LaserRuntime laser = (LaserRuntime)battle.Skills[1];
+            Equal(1, laser.PendingShots.Count);
+            battle.SetSkillEnabled(SkillType.PiercingLaser, false);
+            laser = (LaserRuntime)battle.Skills[1];
+            Equal(0, laser.PendingShots.Count);
+            battle.Advance(1);
+            Equal(10f, enemy.Health);
+            battle.SetSkillEnabled(SkillType.PiercingLaser, true);
+            battle.Advance(0);
+            battle.Advance(0.4f);
+            Equal(5f, enemy.Health);
             battle.End();
         }
 

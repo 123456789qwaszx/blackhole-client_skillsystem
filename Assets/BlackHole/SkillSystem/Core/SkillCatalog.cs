@@ -18,6 +18,7 @@ namespace BlackHole.Skills
         private readonly Dictionary<string, UpgradeNode> _nodes;
         private readonly SkillType[] _starting;
 
+        public IReadOnlyList<SkillType> AvailableSkills { get; }
         public IReadOnlyList<SkillType> StartingSkills => Array.AsReadOnly(_starting);
         public IReadOnlyDictionary<string, UpgradeNode> Nodes => new ReadOnlyDictionary<string, UpgradeNode>(_nodes);
 
@@ -27,6 +28,9 @@ namespace BlackHole.Skills
             _stats = stats;
             _nodes = nodes;
             _starting = starting;
+            var available = new List<SkillType>(stats.Keys);
+            available.Sort();
+            AvailableSkills = available.AsReadOnly();
         }
 
         public int MaxLevel(SkillType skill) => _stats[skill].Length;

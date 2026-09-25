@@ -8,7 +8,8 @@ Unity Play 확인용 진입점(`Unity`), 계약 테스트(`Tests`), 예시 콘�
 Unity의 `Assets/Scenes/SampleScene.unity`를 Play하면 마우스 위치를 조준합니다.
 빨간 구는 Game 뷰에 표시되는 테스트 적입니다. Play 중에는 Hierarchy의
 `GameHost/Enemy`를 선택하면 Inspector에서도 현재 HP를 볼 수 있습니다.
-좌측 디버그 패널에서 전투를 끝내고
+좌측 콘솔의 Available Skills 체크박스로 보유 스킬의 발동을 켜고 끕니다.
+Lv0 스킬은 잠겨 있어 먼저 해금해야 합니다. 콘솔에서 전투를 끝내고
 NodeId 버튼을 눌러 레벨을 올린 뒤 다시 시작하면 새 수치가 적용됩니다.
 조준점과 레이저 경로는 Gizmos를 켜면 볼 수 있습니다. 적 표시는 Gizmos와 무관합니다.
 

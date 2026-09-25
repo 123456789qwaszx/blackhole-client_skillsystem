@@ -14,6 +14,7 @@ namespace BlackHole.Unity
         [SerializeField, Min(0.1f)] private float _enemyHealth = 40;
 
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
+        private readonly Dictionary<SkillType, bool> _enabledBySkill = new Dictionary<SkillType, bool>();
         private SkillCatalog _catalog;
         private SkillProgress _progress;
         private SkillBattle _battle;
@@ -36,6 +37,7 @@ namespace BlackHole.Unity
             }
             _catalog = result.Catalog;
             _progress = new SkillProgress(_catalog);
+            foreach (SkillType skill in _catalog.AvailableSkills) _enabledBySkill.Add(skill, true);
             _camera = Camera.main;
             if (_camera != null) { _camera.orthographic = true; _camera.orthographicSize = 11; }
             _enemySprite = CreateEnemySprite();
@@ -58,6 +60,8 @@ namespace BlackHole.Unity
         {
             ClearEnemies();
             _battle = new SkillBattle(_progress, 1, _arenaRadius, new FixedRandom(0));
+            foreach (var choice in _enabledBySkill)
+                if (!choice.Value) _battle.SetSkillEnabled(choice.Key, false);
             AddEnemy(new Point2(0, 0));
             AddEnemy(new Point2(2, 0));
             AddEnemy(new Point2(0, 2));
@@ -103,8 +107,7 @@ namespace BlackHole.Unity
             GUILayout.BeginArea(new Rect(12, 12, 290, 370), GUI.skin.box);
             GUILayout.Label("Skill Sandbox / aim: mouse");
             if (_catalog == null) { GUILayout.Label(_message); GUILayout.EndArea(); return; }
-            foreach (SkillType skill in (SkillType[])System.Enum.GetValues(typeof(SkillType)))
-                GUILayout.Label($"{skill}: Lv {_progress.Level(skill)} / {_catalog.MaxLevel(skill)}");
+            DrawSkillControls();
             if (_battle != null)
             {
                 foreach (EnemyTarget enemy in _battle.Enemies)
@@ -120,6 +123,29 @@ namespace BlackHole.Unity
             }
             GUILayout.Label(_message);
             GUILayout.EndArea();
+        }
+
+        private void DrawSkillControls()
+        {
+            GUILayout.Label("Available Skills (checked = active)");
+            foreach (SkillType skill in _catalog.AvailableSkills)
+            {
+                int level = _progress.Level(skill);
+                string label = $"{skill}  Lv {level} / {_catalog.MaxLevel(skill)}";
+                if (level == 0)
+                {
+                    bool wasEnabled = GUI.enabled;
+                    GUI.enabled = false;
+                    GUILayout.Toggle(false, label + " (locked)");
+                    GUI.enabled = wasEnabled;
+                    continue;
+                }
+
+                bool selected = GUILayout.Toggle(_enabledBySkill[skill], label);
+                if (selected == _enabledBySkill[skill]) continue;
+                _enabledBySkill[skill] = selected;
+                _battle?.SetSkillEnabled(skill, selected);
+            }
         }
 
         private void OnDrawGizmos()

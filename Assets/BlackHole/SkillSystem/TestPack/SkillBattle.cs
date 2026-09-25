@@ -9,6 +9,8 @@ namespace BlackHole.Skills.TestPack
         private readonly SkillProgress _progress;
         private readonly List<EnemyTarget> _enemies = new List<EnemyTarget>();
         private readonly List<SkillRuntime> _skills = new List<SkillRuntime>();
+        private readonly List<bool> _enabled = new List<bool>();
+        private readonly IReadOnlyDictionary<SkillType, UpgradeStat> _stats;
         private readonly ISkillRandom _random;
         private readonly float _arenaRadius;
         private readonly int _playerId;
@@ -29,11 +31,36 @@ namespace BlackHole.Skills.TestPack
             _random = random;
             _arenaRadius = arenaRadius;
 
-            IReadOnlyDictionary<SkillType, UpgradeStat> stats = progress.Snapshot();
+            _stats = progress.Snapshot();
             foreach (SkillType type in (SkillType[])Enum.GetValues(typeof(SkillType)))
-                if (stats.TryGetValue(type, out UpgradeStat value))
+                if (_stats.TryGetValue(type, out UpgradeStat value))
+                {
                     _skills.Add(SkillRuntime.Create(type, value, playerId));
+                    _enabled.Add(true);
+                }
             _progress.BeginBattle();
+        }
+
+        public bool IsSkillEnabled(SkillType type)
+        {
+            for (int i = 0; i < _skills.Count; i++)
+                if (_skills[i].Type == type) return _enabled[i];
+            return false;
+        }
+
+        public bool SetSkillEnabled(SkillType type, bool enabled)
+        {
+            if (_ended) throw new InvalidOperationException("종료된 전투다.");
+            for (int i = 0; i < _skills.Count; i++)
+            {
+                if (_skills[i].Type != type) continue;
+                if (_enabled[i] == enabled) return true;
+                _enabled[i] = enabled;
+                // 중지할 때 진행 중인 예고와 타이머도 버린다. 재활성화는 새 실행으로 시작한다.
+                if (!enabled) _skills[i] = SkillRuntime.Create(type, _stats[type], _playerId);
+                return true;
+            }
+            return false;
         }
 
         public EnemyTarget AddEnemy(Point2 position, float health)
@@ -48,8 +75,8 @@ namespace BlackHole.Skills.TestPack
         {
             if (_ended) throw new InvalidOperationException("종료된 전투다.");
             IReadOnlyList<ISkillTarget> targets = _enemies;
-            foreach (SkillRuntime skill in _skills)
-                skill.Advance(delta, Aim, targets, _random, _arenaRadius);
+            for (int i = 0; i < _skills.Count; i++)
+                if (_enabled[i]) _skills[i].Advance(delta, Aim, targets, _random, _arenaRadius);
         }
 
         public void End()
