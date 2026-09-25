@@ -6,7 +6,7 @@ namespace BlackHole.Core
     // 한 전투에 적용할 구매 효과. 효과 종류마다 적용하는 자리가 여기에 하나씩 있다.
     // 효과는 콘텐츠의 노드 순서대로 쌓는다. 산 순서와 무관하게 같은 결과가 나온다.
     // 기본 정의는 바꾸지 않는다. 계산된 값은 각 시스템이 적용 시점에 스냅샷으로 가진다.
-    internal sealed class UpgradeModifiers : IBreakerStatModifier, IEnemyStatModifier
+    internal sealed class UpgradeModifiers : IEnemyStatModifier
     {
         public static readonly UpgradeModifiers None = new UpgradeModifiers(Array.Empty<UpgradeEffect>());
 
@@ -34,6 +34,13 @@ namespace BlackHole.Core
                     effects.AddRange(node.Effects);
             }
 
+            effects.Sort((a, b) =>
+            {
+                int kind = a.Kind.CompareTo(b.Kind);
+                if (kind != 0) return kind;
+                int target = string.CompareOrdinal(a.Enemy?.Id, b.Enemy?.Id);
+                return target != 0 ? target : a.Value.CompareTo(b.Value);
+            });
             return effects.Count == 0 ? None : new UpgradeModifiers(effects);
         }
 
@@ -50,75 +57,6 @@ namespace BlackHole.Core
 
                 return false;
             }
-        }
-
-        // Breaker 실행 수치(전투 조립 때).
-        public BreakerStats Apply(BreakerSkillDefinition definition, BreakerStats current)
-        {
-            foreach (UpgradeEffect effect in _effects)
-            {
-                if (effect.Skill != definition)
-                    continue;
-
-                switch (effect.Kind)
-                {
-                    case UpgradeEffectKind.SkillDamageAdd:
-                        current = new BreakerStats(current.Radius, current.Interval, current.Damage + effect.Value);
-                        break;
-
-                    case UpgradeEffectKind.SkillRadiusAdd:
-                        current = new BreakerStats(current.Radius + effect.Value, current.Interval, current.Damage);
-                        break;
-
-                    case UpgradeEffectKind.SkillIntervalMultiply:
-                        current = new BreakerStats(current.Radius, current.Interval * effect.Value, current.Damage);
-                        break;
-                }
-            }
-
-            return current;
-        }
-
-        // 관통 레이저 실행 수치(전투 조립 때).
-        public PiercingLaserStats Apply(PiercingLaserDefinition definition, PiercingLaserStats current)
-        {
-            foreach (UpgradeEffect effect in _effects)
-            {
-                if (effect.Skill != definition)
-                    continue;
-
-                switch (effect.Kind)
-                {
-                    case UpgradeEffectKind.LaserDamageAdd:
-                        current = new PiercingLaserStats(current.Interval, current.Damage + effect.Value, current.Width, current.TelegraphDuration);
-                        break;
-
-                    case UpgradeEffectKind.LaserIntervalMultiply:
-                        current = new PiercingLaserStats(current.Interval * effect.Value, current.Damage, current.Width, current.TelegraphDuration);
-                        break;
-
-                    case UpgradeEffectKind.LaserWidthAdd:
-                        current = new PiercingLaserStats(current.Interval, current.Damage, current.Width + effect.Value, current.TelegraphDuration);
-                        break;
-                }
-            }
-
-            return current;
-        }
-
-        // 산 해금 노드가 주는 Skill(콘텐츠의 노드 순서). 전투 조립 때 시작 구성 뒤에 붙는다.
-        // 한 Skill의 해금 노드는 하나이고 시작 구성과 겹치지 않는다(ContentInvariants).
-        public IReadOnlyList<PassiveSkillDefinition> UnlockedSkills()
-        {
-            var skills = new List<PassiveSkillDefinition>();
-
-            foreach (UpgradeEffect effect in _effects)
-            {
-                if (effect.Kind == UpgradeEffectKind.SkillUnlock)
-                    skills.Add(effect.Skill);
-            }
-
-            return skills;
         }
 
         // 적 실행 수치(출현 때).
@@ -175,3 +113,4 @@ namespace BlackHole.Core
             checked((int)Math.Ceiling(Math.Round(value, 4)));
     }
 }
+

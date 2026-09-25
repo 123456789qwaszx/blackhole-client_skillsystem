@@ -18,6 +18,8 @@ namespace BlackHole.Core
         private readonly Dictionary<string, PassiveSkillDefinition> _skillsById;
         private readonly Dictionary<string, UpgradeNodeDefinition> _upgradesById;
 
+        public UpgradeGraph Graph { get; }
+
         public TimeLimitDefinition TimeLimit { get; }
         public HqDefinition Hq { get; }
         public IReadOnlyList<EnemyDefinition> Enemies { get; }
@@ -40,7 +42,8 @@ namespace BlackHole.Core
             HqGrowthDefinition growth,
             IReadOnlyList<PassiveSkillDefinition> skills,
             IReadOnlyList<string> startingSkills,
-            IReadOnlyList<UpgradeNodeDefinition> upgrades)
+            IReadOnlyList<UpgradeNodeDefinition> upgrades,
+            UpgradeGraph graph = null)
         {
             TimeLimit = timeLimit ?? throw new ArgumentNullException(nameof(timeLimit));
             Hq = hq ?? throw new ArgumentNullException(nameof(hq));
@@ -57,7 +60,13 @@ namespace BlackHole.Core
             ContentInvariants.CollectUpgrades(Upgrades, diagnostics, out _upgradesById);
 
             if (diagnostics.Count == 0)
-                ContentInvariants.CollectSkillUnlocks(Upgrades, starting, diagnostics);
+            {
+                if (graph == null && Upgrades.Count > 0) throw new ArgumentException("노드 그래프가 필요하다.", nameof(graph));
+                Graph = graph ?? new UpgradeGraph(Upgrades, Array.Empty<string>(), Array.Empty<UpgradeEdge>());
+                // Graph가 다른 노드 집합으로 만들어진 경우도 검증한다.
+                Graph = new UpgradeGraph(Upgrades, Graph.StartingNodes, Graph.Edges);
+                ContentInvariants.CollectSkillUnlocks(Upgrades, starting, Graph, diagnostics);
+            }
 
             if (diagnostics.Count > 0)
                 throw new ArgumentException(diagnostics[0].ToString());
@@ -112,3 +121,4 @@ namespace BlackHole.Core
         }
     }
 }
+

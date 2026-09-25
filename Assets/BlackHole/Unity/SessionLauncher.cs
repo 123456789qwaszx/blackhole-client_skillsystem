@@ -23,6 +23,8 @@ namespace BlackHole.Unity
         // 전투가 끝나 구매 화면에 있는가. 이때 Current는 결과를 보여 줄 끝난 전투다.
         public bool InShop { get; private set; }
         public IReadOnlyList<PlayerState> Progress => _progress;
+        public GameContent Content => _content;
+
         public IReadOnlyList<UpgradeNodeDefinition> Upgrades => _content.Upgrades;
 
         public SessionLauncher(
@@ -92,3 +94,4 @@ namespace BlackHole.Unity
         }
     }
 }
+

@@ -206,10 +206,10 @@ namespace BlackHole.Core.Tests
         private static void LaserEffectsDoNotTouchBreaker()
         {
             ContentData data = Armory();
-            data.Upgrades.Add(TestContent.Upgrade("breaker-by-laser", 10, null, TestContent.Effect("LaserDamageAdd", 1, TestContent.SkillId)));
+            data.Upgrades.Add(TestContent.Upgrade("breaker-by-laser", 10, null, TestContent.Stat("Width", "Add", 1, TestContent.SkillId)));
             ContentLoadResult result = ContentLoader.Load(data);
             Expect.Equal(1, result.Diagnostics.Count);
-            TestContent.HasDiagnostic(result, "Upgrades[breaker-by-laser].Effects[0]", "관통 레이저");
+            TestContent.HasDiagnostic(result, "Upgrades[breaker-by-laser].Effects[0]", "Width");
 
             GameContent content = TestContent.Load(Armory());
             Player player = Battle(content, Progress(content, Unlock, LaserDamage, LaserSpeed, LaserWidth)).World.Players[0];
@@ -223,14 +223,15 @@ namespace BlackHole.Core.Tests
         private static void LaserUpgradeMustFollowUnlock()
         {
             ContentData root = Armory();
-            root.Upgrades[3].Requires = null;
+            root.Upgrades[3].Connections.Clear();
+            root.Upgrades[3].IsStart = true;
             ContentLoadResult result = ContentLoader.Load(root);
             Expect.Equal(1, result.Diagnostics.Count);
             TestContent.HasDiagnostic(result, "Upgrades[laser-width].Effects[0]", "해금 노드");
 
             ContentData sibling = Armory();
-            sibling.Upgrades.Add(TestContent.Upgrade("breaker-root", 10, null, TestContent.Effect("SkillDamageAdd", 1, TestContent.SkillId)));
-            sibling.Upgrades[3].Requires = "breaker-root";
+            sibling.Upgrades.Add(TestContent.Upgrade("breaker-root", 10, null, TestContent.Stat("Damage", "Add", 1, TestContent.SkillId)));
+            sibling.Upgrades[3].Connections = new List<string> { "breaker-root" };
             result = ContentLoader.Load(sibling);
             Expect.Equal(1, result.Diagnostics.Count);
             TestContent.HasDiagnostic(result, "Upgrades[laser-width].Effects[0]", "해금 노드");
@@ -240,7 +241,7 @@ namespace BlackHole.Core.Tests
             {
                 TestContent.Upgrade("laser-all", 10, null,
                     UnlockEffect(TestContent.LaserId),
-                    TestContent.Effect("LaserDamageAdd", 1, TestContent.LaserId))
+                    TestContent.Stat("Damage", "Add", 1, TestContent.LaserId))
             };
             Expect.True(ContentLoader.Load(combined).Succeeded, "해금과 강화를 함께 가진 노드는 올바르다.");
         }
@@ -295,9 +296,9 @@ namespace BlackHole.Core.Tests
             data.Upgrades = new List<UpgradeData>
             {
                 TestContent.Upgrade(Unlock, 10, null, UnlockEffect(TestContent.LaserId)),
-                TestContent.Upgrade(LaserDamage, 10, Unlock, TestContent.Effect("LaserDamageAdd", 4, TestContent.LaserId)),
-                TestContent.Upgrade(LaserSpeed, 10, Unlock, TestContent.Effect("LaserIntervalMultiply", 0.5f, TestContent.LaserId)),
-                TestContent.Upgrade(LaserWidth, 10, Unlock, TestContent.Effect("LaserWidthAdd", 1.6f, TestContent.LaserId))
+                TestContent.Upgrade(LaserDamage, 10, Unlock, TestContent.Stat("Damage", "Add", 4, TestContent.LaserId)),
+                TestContent.Upgrade(LaserSpeed, 10, Unlock, TestContent.Stat("AttackSpeed", "Rate", (1f / 0.5f) - 1f, TestContent.LaserId)),
+                TestContent.Upgrade(LaserWidth, 10, Unlock, TestContent.Stat("Width", "Add", 1.6f, TestContent.LaserId))
             };
             return data;
         }
@@ -349,3 +350,4 @@ namespace BlackHole.Core.Tests
         }
     }
 }
+

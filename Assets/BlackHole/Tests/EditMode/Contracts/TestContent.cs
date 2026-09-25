@@ -82,7 +82,10 @@ namespace BlackHole.Core.Tests
             new GrowthLevelData { Exp = exp, ExtraTime = extraTime, Supply = new List<SupplyData>(supply) };
 
         public static UpgradeData Upgrade(string id, int price, string requires, params UpgradeEffectData[] effects) =>
-            new UpgradeData { Id = id, Price = price, Requires = requires, Effects = new List<UpgradeEffectData>(effects) };
+            new UpgradeData { Id = id, Price = price, IsStart = requires == null, Connections = requires == null ? new List<string>() : new List<string> { requires }, Effects = new List<UpgradeEffectData>(effects) };
+
+        public static UpgradeEffectData Stat(string stat, string operation, float value, string target) =>
+            new UpgradeEffectData { Kind = "SkillStat", Stat = stat, Operation = operation, Value = value, Target = target };
 
         public static UpgradeEffectData Effect(string kind, float value, string target = null) =>
             new UpgradeEffectData { Kind = kind, Value = value, Target = target };
@@ -115,3 +118,4 @@ namespace BlackHole.Core.Tests
             (float)System.Math.Sqrt(enemy.Position.DistanceSquared(game.World.Hq.Position));
     }
 }
+

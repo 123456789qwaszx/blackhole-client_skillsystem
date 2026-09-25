@@ -57,7 +57,7 @@ namespace BlackHole.Core.Tests
             ContentData values = TestContent.Data();
             values.Upgrades.Add(TestContent.Upgrade("bad-price", 0, null, TestContent.Effect("GoldMultiply", 2)));
             values.Upgrades.Add(TestContent.Upgrade("bad-kind", 5, null, TestContent.Effect("Teleport", 1)));
-            values.Upgrades.Add(TestContent.Upgrade("no-skill", 5, null, TestContent.Effect("SkillDamageAdd", 1, "ghost")));
+            values.Upgrades.Add(TestContent.Upgrade("no-skill", 5, null, TestContent.Stat("Damage", "Add", 1, "ghost")));
             values.Upgrades.Add(TestContent.Upgrade("zero-gold", 5, null, TestContent.Effect("GoldMultiply", 0)));
             values.Upgrades.Add(TestContent.Upgrade("half-supply", 5, null, TestContent.Effect("GrowthSupplyAdd", 1.5f, TestContent.EnemyId)));
             values.Upgrades.Add(TestContent.Upgrade("empty", 5, null));
@@ -76,11 +76,15 @@ namespace BlackHole.Core.Tests
             links.Upgrades.Add(TestContent.Upgrade("c", 5, "ghost", TestContent.Effect("GoldMultiply", 2)));
             links.Upgrades.Add(TestContent.Upgrade("c", 5, null, TestContent.Effect("GoldMultiply", 2)));
             result = ContentLoader.Load(links);
-            Expect.Equal(4, result.Diagnostics.Count);
+            Expect.Equal(1, result.Diagnostics.Count);
             TestContent.HasDiagnostic(result, "Upgrades[3]", "c");
-            TestContent.HasDiagnostic(result, "Upgrades[2].Requires", "ghost");
-            TestContent.HasDiagnostic(result, "Upgrades[0].Requires", "순환");
-            TestContent.HasDiagnostic(result, "Upgrades[1].Requires", "순환");
+            links.Upgrades.RemoveAt(3);
+            links.Upgrades[1].Connections.Clear();
+            result = ContentLoader.Load(links);
+            TestContent.HasDiagnostic(result, "Upgrades.Graph", "ghost");
+            links.Upgrades.RemoveAt(2);
+            result = ContentLoader.Load(links);
+            TestContent.HasDiagnostic(result, "Upgrades.Graph", "닿지 않는");
         }
 
         // 전투 시작 배치와 성장 노드의 오류. 개별 값은 정의 생성자가, Enemy 참조는 로더가 경로와 함께 보고한다.
@@ -213,3 +217,4 @@ namespace BlackHole.Core.Tests
         }
     }
 }
+

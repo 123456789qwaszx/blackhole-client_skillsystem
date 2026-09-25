@@ -54,20 +54,6 @@ namespace BlackHole.Core
         {
             upgradesById = Index(upgrades, "Upgrades", "업그레이드", u => u.Id, into);
 
-            for (int i = 0; i < upgrades.Count; i++)
-            {
-                UpgradeNodeDefinition node = upgrades[i];
-
-                if (node?.Requires == null)
-                    continue;
-
-                string at = $"Upgrades[{i}].Requires";
-
-                if (!upgradesById.ContainsKey(node.Requires))
-                    into.Add(new ContentDiagnostic(at, $"정의되지 않은 선행 노드 ID '{node.Requires}'."));
-                else if (!ReachesRoot(node, upgradesById))
-                    into.Add(new ContentDiagnostic(at, $"선행 노드를 따라가면 시작 노드에 닿지 않는다(순환): '{node.Id}'."));
-            }
         }
 
         // Skill 해금의 규칙(CONTENT_DEFINITION 3.3). 노드 사이의 규칙(선행 실재, 순환 없음)이 통과한 뒤에 본다.
@@ -78,6 +64,7 @@ namespace BlackHole.Core
         public static void CollectSkillUnlocks(
             IReadOnlyList<UpgradeNodeDefinition> upgrades,
             IReadOnlyList<string> startingSkills,
+            UpgradeGraph graph,
             ICollection<ContentDiagnostic> into)
         {
             var starting = new HashSet<string>(startingSkills, StringComparer.Ordinal);
@@ -121,48 +108,12 @@ namespace BlackHole.Core
 
                     string skill = effect.Skill.Id;
 
-                    if (!unlockNodeBySkill.TryGetValue(skill, out string unlock) || !ChainContains(node, unlock, byId))
+                    if (!unlockNodeBySkill.TryGetValue(skill, out string unlock) || !graph.RequiresUnlock(node.Id, unlock))
                         into.Add(new ContentDiagnostic(
                             $"Upgrades[{node.Id}].Effects[{j}]",
-                            $"시작 구성에 없는 Skill '{skill}'를 바꾼다. 선행을 따라가면 이 Skill의 해금 노드에 닿아야 한다."));
+                            $"시작 구성에 없는 Skill '{skill}'를 바꾼다. 모든 구매 경로가 이 Skill의 해금 노드를 거쳐야 한다."));
                 }
             }
-        }
-
-        // node에서 선행을 따라가며(자기 자신 포함) targetId 노드를 만나는가. 순환이 없음은 먼저 확인됐다.
-        private static bool ChainContains(
-            UpgradeNodeDefinition node,
-            string targetId,
-            Dictionary<string, UpgradeNodeDefinition> byId)
-        {
-            UpgradeNodeDefinition current = node;
-
-            for (int steps = 0; steps <= byId.Count; steps++)
-            {
-                if (current.Id == targetId)
-                    return true;
-
-                if (current.Requires == null || !byId.TryGetValue(current.Requires, out current))
-                    return false;
-            }
-
-            return false;
-        }
-
-        private static bool ReachesRoot(UpgradeNodeDefinition node, Dictionary<string, UpgradeNodeDefinition> byId)
-        {
-            UpgradeNodeDefinition current = node;
-
-            for (int steps = 0; steps <= byId.Count; steps++)
-            {
-                if (current.Requires == null)
-                    return true;
-
-                if (!byId.TryGetValue(current.Requires, out current))
-                    return false;
-            }
-
-            return false;
         }
 
         // 시작 Skill은 실재해야 하고, 같은 Skill을 두 번 가질 수 없다.
@@ -186,3 +137,4 @@ namespace BlackHole.Core
         }
     }
 }
+

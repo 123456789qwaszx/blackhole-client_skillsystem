@@ -16,7 +16,7 @@ namespace BlackHole.Core.Tests
             yield return new Contract("Upgrade.NextBattleKeepsProgressAndRenewsBattle", NextBattleKeepsProgressAndRenewsBattle);
             yield return new Contract("Upgrade.PurchasedEffectsChangeNextBattle", PurchasedEffectsChangeNextBattle);
             yield return new Contract("Upgrade.SkillEffectsTargetTheirSkill", SkillEffectsTargetTheirSkill);
-            yield return new Contract("Upgrade.SkillStatEffectsTargetOnlyBreaker", SkillStatEffectsTargetOnlyBreaker);
+            yield return new Contract("Upgrade.SkillStatMustExistOnTarget", SkillStatMustExistOnTarget);
             yield return new Contract("Upgrade.NewProgressionStartsEmpty", NewProgressionStartsEmpty);
             yield return new Contract("Upgrade.PlayerStatesAreIndependent", PlayerStatesAreIndependent);
             yield return new Contract("Upgrade.SharedWorldPurchasesInMultiplayerHaveNoPolicy", SharedWorldPurchasesInMultiplayerHaveNoPolicy);
@@ -111,9 +111,9 @@ namespace BlackHole.Core.Tests
             data.Growth.Levels.Add(TestContent.Level(1, 0, TestContent.Supply("coin", 1)));
             data.Upgrades = new List<UpgradeData>
             {
-                TestContent.Upgrade("dmg", 10, null, TestContent.Effect("SkillDamageAdd", 2, TestContent.SkillId)),
-                TestContent.Upgrade("rad", 10, "dmg", TestContent.Effect("SkillRadiusAdd", 0.5f, TestContent.SkillId)),
-                TestContent.Upgrade("spd", 10, "dmg", TestContent.Effect("SkillIntervalMultiply", 0.5f, TestContent.SkillId)),
+                TestContent.Upgrade("dmg", 10, null, TestContent.Stat("Damage", "Add", 2, TestContent.SkillId)),
+                TestContent.Upgrade("rad", 10, "dmg", TestContent.Stat("Radius", "Add", 0.5f, TestContent.SkillId)),
+                TestContent.Upgrade("spd", 10, "dmg", TestContent.Stat("AttackSpeed", "Rate", (1f / 0.5f) - 1f, TestContent.SkillId)),
                 TestContent.Upgrade("hp", 10, "dmg", TestContent.Effect("EnemyHealthMultiply", 3)),
                 TestContent.Upgrade("gold", 10, "dmg", TestContent.Effect("GoldMultiply", 1.5f, "coin")),
                 TestContent.Upgrade("exp", 10, "dmg", TestContent.Effect("HqExpMultiply", 2)),
@@ -124,7 +124,7 @@ namespace BlackHole.Core.Tests
             EarnInBattle(content, state);
 
             foreach (UpgradeNodeDefinition node in content.Upgrades)
-                Expect.Equal(PurchaseResult.Purchased, UpgradePurchase.TryPurchase(state, node));
+                Expect.Equal(PurchaseResult.Purchased, UpgradePurchase.TryPurchase(state, content, node.Id));
 
             Expect.Equal(31, state.Gold);
 
@@ -161,7 +161,7 @@ namespace BlackHole.Core.Tests
             data.StartingSkills.Add("second");
             data.Upgrades = new List<UpgradeData>
             {
-                TestContent.Upgrade("second-damage", 10, null, TestContent.Effect("SkillDamageAdd", 5, "second"))
+                TestContent.Upgrade("second-damage", 10, null, TestContent.Stat("Damage", "Add", 5, "second"))
             };
             GameContent content = TestContent.Load(data);
             var state = new PlayerState(TestContent.First);
@@ -176,16 +176,14 @@ namespace BlackHole.Core.Tests
 
         // 지금 있는 Skill 수치 효과는 Breaker의 반경·주기·피해만 바꾼다. 레이저를 대상으로 하면
         // 사도 아무 일이 없는 노드가 되므로 콘텐츠 오류로 보고한다(CA-002 W2 흉내가 더는 통과하지 않는다).
-        private static void SkillStatEffectsTargetOnlyBreaker()
+        private static void SkillStatMustExistOnTarget()
         {
             ContentData data = Market(coins: 1, gold: 10);
             data.Skills.Add(TestContent.Laser(TestContent.LaserId, interval: 1, damage: 1, width: 0.2f, telegraph: 0.5f));
-            data.Upgrades.Add(TestContent.Upgrade("laser-width", 10, null, TestContent.Effect("SkillRadiusAdd", 0.2f, TestContent.LaserId)));
-            data.Upgrades.Add(TestContent.Upgrade("laser-damage", 10, null, TestContent.Effect("SkillDamageAdd", 1, TestContent.LaserId)));
+            data.Upgrades.Add(TestContent.Upgrade("laser-width", 10, null, TestContent.Stat("Radius", "Add", 0.2f, TestContent.LaserId)));
             ContentLoadResult result = ContentLoader.Load(data);
-            Expect.Equal(2, result.Diagnostics.Count);
-            TestContent.HasDiagnostic(result, "Upgrades[laser-width].Effects[0]", "Breaker");
-            TestContent.HasDiagnostic(result, "Upgrades[laser-damage].Effects[0]", "Breaker");
+            Expect.Equal(1, result.Diagnostics.Count);
+            TestContent.HasDiagnostic(result, "Upgrades[laser-width].Effects[0]", "Radius");
         }
 
         // 새 진행은 빈 PlayerState로 시작한다. 이어 받는 다음 전투와 구분된다.
@@ -275,8 +273,8 @@ namespace BlackHole.Core.Tests
             data.StartSupply = new List<SupplyData> { TestContent.Supply("coin", coins) };
             data.Upgrades = new List<UpgradeData>
             {
-                TestContent.Upgrade("root", 10, null, TestContent.Effect("SkillDamageAdd", 1, TestContent.SkillId)),
-                TestContent.Upgrade("child", 15, "root", TestContent.Effect("SkillRadiusAdd", 1, TestContent.SkillId))
+                TestContent.Upgrade("root", 10, null, TestContent.Stat("Damage", "Add", 1, TestContent.SkillId)),
+                TestContent.Upgrade("child", 15, "root", TestContent.Stat("Radius", "Add", 1, TestContent.SkillId))
             };
             return data;
         }
@@ -293,7 +291,8 @@ namespace BlackHole.Core.Tests
         private static PurchaseResult Buy(GameContent content, PlayerState state, string id)
         {
             Expect.True(content.TryGetUpgrade(id, out UpgradeNodeDefinition node), "노드가 있어야 한다: " + id);
-            return UpgradePurchase.TryPurchase(state, node);
+            return UpgradePurchase.TryPurchase(state, content, node.Id);
         }
     }
 }
+

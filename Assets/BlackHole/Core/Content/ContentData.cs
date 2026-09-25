@@ -30,7 +30,9 @@ namespace BlackHole.Core
         public string Id;
         public int Price;
         // 선행 노드 ID. 비어 있으면 처음부터 살 수 있다.
-        public string Requires;
+        public bool IsStart;
+        // 연결선은 한쪽에서 한 번만 적는다. 실행에서는 무방향으로 해석한다.
+        public List<string> Connections = new List<string>();
         public List<UpgradeEffectData> Effects = new List<UpgradeEffectData>();
     }
 
@@ -42,6 +44,9 @@ namespace BlackHole.Core
         public float Value;
         // 대상 ID. Skill 효과는 Skill ID, 공급 효과는 Enemy ID, 적 수치·보상 효과는 Enemy ID(비우면 모든 종류).
         public string Target;
+        // SkillStat일 때만 사용. 예: Damage / Rate / 0.25 = 피해 +25%.
+        public string Stat;
+        public string Operation;
     }
 
     [Serializable]
@@ -147,3 +152,4 @@ namespace BlackHole.Core
         public List<SupplyData> Supply = new List<SupplyData>();
     }
 }
+

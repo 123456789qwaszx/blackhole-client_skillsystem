@@ -62,7 +62,7 @@ namespace BlackHole.Unity
         public ShopRequest DrawShop(
             GameSession finished,
             IReadOnlyList<PlayerState> progress,
-            IReadOnlyList<UpgradeNodeDefinition> nodes)
+            GameContent content)
         {
             var request = new ShopRequest(ShopRequestKind.None);
 
@@ -75,13 +75,13 @@ namespace BlackHole.Unity
             {
                 GUILayout.Label($"{state.Id}  Gold {state.Gold}");
 
-                foreach (UpgradeNodeDefinition node in nodes)
+                foreach (UpgradeNodeDefinition node in content.Upgrades)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Space(12 + 16 * Depth(node, nodes));
+                    GUILayout.Space(12);
                     GUILayout.Label($"{node.Id}: {Describe(node)}", GUILayout.Width(300));
 
-                    PurchaseResult check = UpgradePurchase.Check(state, node);
+                    PurchaseResult check = UpgradePurchase.Check(state, content, node.Id);
                     GUI.enabled = check == PurchaseResult.Purchased;
 
                     if (GUILayout.Button(ButtonText(check, node), GUILayout.Width(110)))
@@ -126,47 +126,19 @@ namespace BlackHole.Unity
 
                 switch (effect.Kind)
                 {
-                    case UpgradeEffectKind.SkillDamageAdd: parts.Add($"damage +{effect.Value} ({target})"); break;
-                    case UpgradeEffectKind.SkillRadiusAdd: parts.Add($"radius +{effect.Value} ({target})"); break;
-                    case UpgradeEffectKind.SkillIntervalMultiply: parts.Add($"interval x{effect.Value} ({target})"); break;
+                    case UpgradeEffectKind.SkillStat:
+                        parts.Add($"{effect.Address.Value.StatId} {effect.Modifier.Value.Operation} {effect.Value} ({target})");
+                        break;
                     case UpgradeEffectKind.EnemyHealthMultiply: parts.Add($"enemy HP x{effect.Value} ({target})"); break;
                     case UpgradeEffectKind.GoldMultiply: parts.Add($"gold x{effect.Value} ({target})"); break;
                     case UpgradeEffectKind.HqExpMultiply: parts.Add($"HQ EXP x{effect.Value} ({target})"); break;
                     case UpgradeEffectKind.GrowthSupplyAdd: parts.Add($"growth supply +{effect.Value} ({target})"); break;
                     case UpgradeEffectKind.SkillUnlock: parts.Add($"unlock {target}"); break;
-                    case UpgradeEffectKind.LaserDamageAdd: parts.Add($"damage +{effect.Value} ({target})"); break;
-                    case UpgradeEffectKind.LaserIntervalMultiply: parts.Add($"interval x{effect.Value} ({target})"); break;
-                    case UpgradeEffectKind.LaserWidthAdd: parts.Add($"width +{effect.Value} ({target})"); break;
                     default: parts.Add(effect.Kind.ToString()); break;
                 }
             }
 
             return string.Join(", ", parts);
-        }
-
-        private static int Depth(UpgradeNodeDefinition node, IReadOnlyList<UpgradeNodeDefinition> nodes)
-        {
-            int depth = 0;
-            string requires = node.Requires;
-
-            while (requires != null && depth < nodes.Count)
-            {
-                depth++;
-                requires = Find(requires, nodes)?.Requires;
-            }
-
-            return depth;
-        }
-
-        private static UpgradeNodeDefinition Find(string id, IReadOnlyList<UpgradeNodeDefinition> nodes)
-        {
-            foreach (UpgradeNodeDefinition node in nodes)
-            {
-                if (node.Id == id)
-                    return node;
-            }
-
-            return null;
         }
 
         private static string Growth(Hq hq) =>
@@ -185,3 +157,4 @@ namespace BlackHole.Unity
         }
     }
 }
+

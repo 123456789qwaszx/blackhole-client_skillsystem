@@ -74,10 +74,10 @@ namespace BlackHole.Sample
             // [임시] 업그레이드 샘플 트리. 원래는 노드 저작 툴이 만들 데이터다(M6).
             Upgrades = new List<UpgradeData>
             {
-                Upgrade("breaker-damage", 10, null, Effect("SkillDamageAdd", 2, AuraSkillId)),
-                Upgrade("breaker-radius", 15, "breaker-damage", Effect("SkillRadiusAdd", 0.3f, AuraSkillId)),
+                Upgrade("breaker-damage", 10, null, Stat("Damage", "Add", 2, AuraSkillId)),
+                Upgrade("breaker-radius", 15, "breaker-damage", Stat("Radius", "Add", 0.3f, AuraSkillId)),
                 Upgrade("growth-supply", 25, "breaker-radius", Effect("GrowthSupplyAdd", 2, LightEnemyId)),
-                Upgrade("breaker-speed", 20, "breaker-damage", Effect("SkillIntervalMultiply", 0.8f, AuraSkillId)),
+                Upgrade("breaker-speed", 20, "breaker-damage", Stat("AttackSpeed", "Rate", (1f / 0.8f) - 1f, AuraSkillId)),
                 Upgrade("golden-touch", 40, "breaker-speed", Effect("GoldMultiply", 1.5f)),
                 Upgrade("dense-matter", 30, "breaker-damage",
                     Effect("EnemyHealthMultiply", 1.5f),
@@ -85,7 +85,7 @@ namespace BlackHole.Sample
                     Effect("HqExpMultiply", 1.5f)),
                 // [임시] CONTENT_DEFINITION 3.2의 레이저 노드. 해금은 값이 없는 효과라 0을 적는다(AUTHORING_PAIN AP9).
                 Upgrade("laser-unlock", 30, "breaker-damage", Effect("SkillUnlock", 0, LaserSkillId)),
-                Upgrade("laser-width", 20, "laser-unlock", Effect("LaserWidthAdd", 0.2f, LaserSkillId))
+                Upgrade("laser-width", 20, "laser-unlock", Stat("Width", "Add", 0.2f, LaserSkillId))
             }
         };
 
@@ -115,9 +115,13 @@ namespace BlackHole.Sample
             new SupplyData { Enemy = enemy, Count = count };
 
         private static UpgradeData Upgrade(string id, int price, string requires, params UpgradeEffectData[] effects) =>
-            new UpgradeData { Id = id, Price = price, Requires = requires, Effects = new List<UpgradeEffectData>(effects) };
+            new UpgradeData { Id = id, Price = price, IsStart = requires == null, Connections = requires == null ? new List<string>() : new List<string> { requires }, Effects = new List<UpgradeEffectData>(effects) };
+
+        private static UpgradeEffectData Stat(string stat, string operation, float value, string target) =>
+            new UpgradeEffectData { Kind = "SkillStat", Stat = stat, Operation = operation, Value = value, Target = target };
 
         private static UpgradeEffectData Effect(string kind, float value, string target = null) =>
             new UpgradeEffectData { Kind = kind, Value = value, Target = target };
     }
 }
+

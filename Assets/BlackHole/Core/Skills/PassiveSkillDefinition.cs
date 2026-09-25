@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace BlackHole.Core
 {
@@ -8,6 +9,11 @@ namespace BlackHole.Core
     public abstract class PassiveSkillDefinition
     {
         public string Id { get; }
+        public abstract StatCatalog Stats { get; }
+        public abstract IReadOnlyDictionary<string, float> BaseValues { get; }
+
+        public StatValues ComputeStats(IReadOnlyList<StatModifier> modifiers) => Stats.Compute(BaseValues, modifiers);
+        internal abstract PassiveSkill Create(Player owner, StatValues values);
 
         private protected PassiveSkillDefinition(string id)
         {
@@ -35,7 +41,18 @@ namespace BlackHole.Core
     // Breaker: 주기마다 소유 Player의 현재 Aim Point 주변 원 안의 Enemy를 전부 공격한다.
     public sealed class BreakerSkillDefinition : PassiveSkillDefinition
     {
+        private static readonly StatCatalog Catalog = new StatCatalog(
+            new StatDefinition("Damage", "피해", "damage", float.Epsilon, float.MaxValue),
+            new StatDefinition("Radius", "반경", "units", float.Epsilon, float.MaxValue),
+            new StatDefinition("AttackSpeed", "공격 속도", "ratio", 0.01f, 100f));
+
+        public override StatCatalog Stats => Catalog;
+        public override IReadOnlyDictionary<string, float> BaseValues =>
+            new Dictionary<string, float> { ["Damage"] = BaseStats.Damage, ["Radius"] = BaseStats.Radius, ["AttackSpeed"] = 1 };
         public BreakerStats BaseStats { get; }
+
+        internal override PassiveSkill Create(Player owner, StatValues values) =>
+            new BreakerSkill(this, new BreakerStats(values["Radius"], BaseStats.Interval / values["AttackSpeed"], values["Damage"]), owner);
 
         public BreakerSkillDefinition(string id, BreakerStats baseStats) : base(id)
         {
@@ -67,7 +84,21 @@ namespace BlackHole.Core
     // 예고가 끝나는 순간 경로의 폭 안에 있는 Enemy에게 한 번씩 피해를 준다(CONTENT_DEFINITION 2.3).
     public sealed class PiercingLaserDefinition : PassiveSkillDefinition
     {
+        private static readonly StatCatalog Catalog = new StatCatalog(
+            new StatDefinition("Damage", "피해", "damage", float.Epsilon, float.MaxValue),
+            new StatDefinition("Width", "폭", "units", float.Epsilon, float.MaxValue),
+            new StatDefinition("AttackSpeed", "공격 속도", "ratio", 0.01f, 100f),
+            new StatDefinition("TelegraphDuration", "예고 시간", "seconds", 0.01f, 60f));
+
+        public override StatCatalog Stats => Catalog;
+        public override IReadOnlyDictionary<string, float> BaseValues =>
+            new Dictionary<string, float> { ["Damage"] = BaseStats.Damage, ["Width"] = BaseStats.Width,
+                ["AttackSpeed"] = 1, ["TelegraphDuration"] = BaseStats.TelegraphDuration };
         public PiercingLaserStats BaseStats { get; }
+
+        internal override PassiveSkill Create(Player owner, StatValues values) =>
+            new PiercingLaserSkill(this, new PiercingLaserStats(BaseStats.Interval / values["AttackSpeed"],
+                values["Damage"], values["Width"], values["TelegraphDuration"]), owner);
         // [임시] HQ로부터 시작점까지의 거리이자 경로가 끝나는 경계. Skill 수치가 아니라 이 레이저의 공간 값이다.
         // 화면이 이 원 안쪽만 보여 줘야 시작점이 화면 밖에 있다.
         public float BoundaryRadius { get; }
@@ -79,3 +110,4 @@ namespace BlackHole.Core
         }
     }
 }
+

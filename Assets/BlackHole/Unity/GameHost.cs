@@ -119,7 +119,7 @@ namespace BlackHole.Unity
 
         private void DrawShop()
         {
-            ShopRequest request = _hud.DrawShop(_launcher.Current, _launcher.Progress, _launcher.Upgrades);
+            ShopRequest request = _hud.DrawShop(_launcher.Current, _launcher.Progress, _launcher.Content);
 
             switch (request.Kind)
             {
@@ -181,3 +181,4 @@ namespace BlackHole.Unity
         #endregion
     }
 }
+

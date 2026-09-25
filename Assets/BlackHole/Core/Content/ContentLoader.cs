@@ -55,8 +55,9 @@ namespace BlackHole.Core
             if (diagnostics.Count > 0)
                 return Fail(diagnostics);
 
-            // 해금 규칙은 선행 사슬이 올바를 때 본다.
-            ContentInvariants.CollectSkillUnlocks(upgrades, startingSkills, diagnostics);
+            UpgradeGraph graph = LoadGraph(data.Upgrades, upgrades, diagnostics);
+            if (diagnostics.Count > 0) return Fail(diagnostics);
+            ContentInvariants.CollectSkillUnlocks(upgrades, startingSkills, graph, diagnostics);
 
             if (diagnostics.Count > 0)
                 return Fail(diagnostics);
@@ -70,7 +71,7 @@ namespace BlackHole.Core
                 growth,
                 skills,
                 startingSkills,
-                upgrades);
+                upgrades, graph);
 
             return new ContentLoadResult(content, diagnostics);
         }
@@ -285,7 +286,7 @@ namespace BlackHole.Core
                     continue;
 
                 UpgradeNodeDefinition node = Guard(at, into, () =>
-                    new UpgradeNodeDefinition(item.Id, item.Price, item.Requires, effects));
+                    new UpgradeNodeDefinition(item.Id, item.Price, effects));
 
                 if (node != null)
                     upgrades.Add(node);
@@ -334,7 +335,40 @@ namespace BlackHole.Core
                 }
             }
 
+            if (kind == UpgradeEffectKind.SkillStat)
+            {
+                if (!Enum.TryParse(item.Operation, out StatOperation operation) || operation.ToString() != item.Operation)
+                {
+                    into.Add(new ContentDiagnostic(at + ".Operation", "허용 연산: Add, Rate."));
+                    return null;
+                }
+                return Guard(at, into, () => new UpgradeEffect(kind, item.Value, skill, enemy,
+                    new StatModifier(item.Stat, operation, item.Value)));
+            }
+            if (!string.IsNullOrEmpty(item.Stat) || !string.IsNullOrEmpty(item.Operation))
+            {
+                into.Add(new ContentDiagnostic(at, "이 효과는 수치 주소와 연산을 받지 않는다."));
+                return null;
+            }
             return Guard(at, into, () => new UpgradeEffect(kind, item.Value, skill, enemy));
+        }
+
+        private static UpgradeGraph LoadGraph(List<UpgradeData> data,
+            IReadOnlyList<UpgradeNodeDefinition> nodes, List<ContentDiagnostic> into)
+        {
+            return Guard("Upgrades.Graph", into, () =>
+            {
+                var starts = new List<string>();
+                var edges = new List<UpgradeEdge>();
+                if (data != null)
+                    foreach (UpgradeData node in data)
+                    {
+                        if (node.IsStart) starts.Add(node.Id);
+                        if (node.Connections == null) continue;
+                        foreach (string other in node.Connections) edges.Add(new UpgradeEdge(node.Id, other));
+                    }
+                return new UpgradeGraph(nodes, starts, edges);
+            });
         }
 
         // Enum.TryParse는 숫자 문자열도 통과시킨다. 이름이 정확히 같을 때만 받는다.
@@ -436,3 +470,4 @@ namespace BlackHole.Core
             new ContentLoadResult(null, diagnostics);
     }
 }
+

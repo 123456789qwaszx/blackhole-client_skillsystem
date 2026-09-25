@@ -22,6 +22,7 @@ namespace BlackHole.Core.Tests
     {
         public static IEnumerable<Contract> All()
         {
+            foreach (Contract contract in SkillSystemContracts.Cases()) yield return contract;
             foreach (Contract contract in HarnessContracts.Cases()) yield return contract;
             foreach (Contract contract in ContentContracts.Cases()) yield return contract;
             foreach (Contract contract in SessionContracts.Cases()) yield return contract;
@@ -37,3 +38,4 @@ namespace BlackHole.Core.Tests
         }
     }
 }
+

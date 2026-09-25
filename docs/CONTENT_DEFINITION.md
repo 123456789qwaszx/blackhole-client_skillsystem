@@ -1,5 +1,7 @@
 # CONTENT DEFINITION — 대표 콘텐츠 명세
 
+> 스킬 시스템 분리 저장소의 현재 수치 주소·그래프 계약은 [SKILL_SYSTEM_SPEC](SKILL_SYSTEM_SPEC.md)을 따른다. 이 문서의 CA 기록은 당시 구현을 설명한다.
+
 작성일: 2026-09-25
 
 상위 계획: [CONTENT_AUTHORING_PLAN](CONTENT_AUTHORING_PLAN.md) — 이 문서는 **CA-001 산출물**이며, 5절은 CA-005의 결과다.
@@ -494,3 +496,4 @@ Skill이 두 개인 지금은 첫 방향으로도 충분하다. CA-003의 "미�
 | CA-004 | 3.3의 해금 규칙, 3.4의 NodeId 요청, P1의 방향 |
 | CA-005 | 5절 전체. CA-005에서 발사 기록·Breaker 맞힌 수를 더하고, 레이저 표현과 임시 소리로 재생 정책 시험 값을 연결했다 |
 | CA-006 | 6절의 기록 형식을 채운 목록 |
+

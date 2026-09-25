@@ -2,6 +2,8 @@
 
 작성일: 2026-09-25
 
+> **구현 상태 갱신:** ST-003/004를 구현했다. 현재 계약과 사용자 확정 결정은 [SKILL_SYSTEM_SPEC](SKILL_SYSTEM_SPEC.md)을 따른다. 아래 본문은 이전 제안·조사 기록이다. 전체 콘텐츠 명세는 착수 조건이 아니며, 콘텐츠와 도구는 수치 목록·그래프 계약 뒤 나란히 진행한다. 전기·폭발·일시 버프는 천체 사망 효과, 수치 주소 보정과 전투 밖 구매는 사용자 확정이다.
+
 구현 확인 기준: dev `d71c0f4`
 
 기준 문서: [GAME_RULES_MVP](GAME_RULES_MVP.md) · [SYSTEM_CATALOG](SYSTEM_CATALOG.md) · [CONTENT_AUTHORING_PLAN](CONTENT_AUTHORING_PLAN.md) · [CONTENT_DEFINITION](CONTENT_DEFINITION.md) · [AUTHORING_PAIN](AUTHORING_PAIN.md) · [REFERENCE_ANALYSIS](REFERENCE_ANALYSIS.md)
@@ -417,3 +419,4 @@ R 번호는 REFERENCE_ANALYSIS의 출처다. 아래 S 번호는 이번에 더했
 - **S7 · 플레이어 토론, 2026-02-08**: [suggestions to make the demo more compelling](https://steamcommunity.com/app/3694480/discussions/0/759554462772957602/) — 트리가 거의 일직선, 전기가 플레이어가 아니라 소행성의 특성.
 
 R5(Game feels braindead…)의 같은 토론에는 트리가 "철로"처럼 다음 선택이 하나뿐이라는 의견과, 가격 상승이 진행을 막는다는 의견도 있다(2025-12-17, 플레이어 의견).
+

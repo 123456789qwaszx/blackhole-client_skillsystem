@@ -170,7 +170,11 @@ namespace BlackHole.Core.Tests
             content.TryGetSkill(TestContent.SkillId, out PassiveSkillDefinition skill);
             var definition = (BreakerSkillDefinition)skill;
 
-            BreakerStats boosted = BreakerStatCalculator.Compute(definition, new IBreakerStatModifier[] { new Overdrive() });
+            StatValues values = definition.ComputeStats(new[] {
+                new StatModifier("Radius", StatOperation.Rate, 1),
+                new StatModifier("AttackSpeed", StatOperation.Rate, 1),
+                new StatModifier("Damage", StatOperation.Add, 3) });
+            BreakerStats boosted = ((BreakerSkill)definition.Create(new Player(new PlayerState(TestContent.First)), values)).Stats;
             Expect.Near(2, boosted.Radius);
             Expect.Near(0.25f, boosted.Interval);
             Expect.Near(4, boosted.Damage);
@@ -201,11 +205,5 @@ namespace BlackHole.Core.Tests
             throw new InvalidOperationException($"{point} 근처에 Enemy가 없다.");
         }
 
-        // 테스트 전용 보정: 반경 2배, 주기 절반, 피해 +3.
-        private sealed class Overdrive : IBreakerStatModifier
-        {
-            public BreakerStats Apply(BreakerSkillDefinition definition, BreakerStats current) =>
-                new BreakerStats(current.Radius * 2, current.Interval / 2, current.Damage + 3);
-        }
     }
 }

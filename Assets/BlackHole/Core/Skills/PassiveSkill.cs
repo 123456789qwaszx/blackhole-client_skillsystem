@@ -24,18 +24,9 @@ namespace BlackHole.Core
     // 실행 수치는 여기서 한 번 계산한다: 기본 수치 + 소유 Player가 산, 이 Skill을 대상으로 한 보정.
     internal static class PassiveSkills
     {
-        public static PassiveSkill Create(PassiveSkillDefinition definition, Player owner, UpgradeModifiers modifiers)
+        public static PassiveSkill Create(PassiveSkillDefinition definition, Player owner, IReadOnlyList<StatModifier> modifiers)
         {
-            switch (definition)
-            {
-                case BreakerSkillDefinition breaker:
-                    return new BreakerSkill(breaker, BreakerStatCalculator.Compute(breaker, new IBreakerStatModifier[] { modifiers }), owner);
-                case PiercingLaserDefinition laser:
-                    return new PiercingLaserSkill(laser, modifiers.Apply(laser, laser.BaseStats), owner);
-                default:
-                    throw new ArgumentException(
-                        $"실행 규칙이 연결되지 않은 Skill 종류 '{definition?.GetType().Name}'.", nameof(definition));
-            }
+            return definition.Create(owner, definition.ComputeStats(modifiers));
         }
     }
 
@@ -124,3 +115,4 @@ namespace BlackHole.Core
             enemy.Position.DistanceSquared(origin) <= radius * radius;
     }
 }
+
